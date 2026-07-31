@@ -191,6 +191,27 @@ Con esto fijo, **el agente de frontend puede mockear esta respuesta y construir 
 
 ---
 
+## 📊 Estado del sprint (Agent 3 feed)
+
+> Este apartado se actualiza en tiempo real para que todo el equipo vea el avance de cada agente sin tener que hacer *fetch* manual.
+
+| Hora | 🎨 Frontend | ⚙️ Backend | 🧠 Gemma (este agente) |
+|------|-------------|------------|------------------------|
+| 0:15–1:00 | — | — | ✅ **Prompt de clasificación** diseñado (`gemma/prompt.py`) ✅ Tests unitarios del parser (`tests/test_parser.py`, 15 tests) ✅ Tests de pipeline E2E con mock (`tests/test_pipeline.py`, 5 tests) ✅ Script manual `test_prompt.py` validado con 6 escenarios simulados |
+| 1:00–1:45 | — | — | ⏳ Afinar prompt con feedback de Gemma real (pendiente del tunnel) |
+| 1:45 | 🔗 Checkpoint integración #1 | 🔗 Checkpoint integración #1 | 🔗 Checkpoint integración #1 |
+
+**Entregables de hoy (Agent 3):**
+- `gemma/prompt.py` — prompt compacto (<1400 chars / ~350 tokens, deja margen en el límite de 4096)
+- `gemma/parser.py` — parser robusto: maneja markdown fences, JSON con comas finales, texto circundante, valida contra el contrato
+- `gemma/client.py` — wrapper OpenAI SDK con env vars (`GEMMA_BASE_URL`, `GEMMA_API_KEY`)
+- `gemma/classifier.py` — orquestador `GemmaClassifier.classify(audio_base64) → dict` + función `gemma.classify()` de conveniencia
+- `tests/` — 20 tests unitarios, todos verdes
+
+**Próximos pasos:** ajustar el prompt con outputs reales de Gemma una vez el tunnel esté disponible; validar con audios grabados del micrófono.
+
+---
+
 ## Notas para el pitch
 
 - El argumento más fuerte que tienen: **no es solo "otro wearable que vibra"**, es un sistema que **interpreta contexto y es personalizable**, corriendo local por privacidad.
