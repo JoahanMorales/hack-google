@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{{nombre}} · escuchando</title>
+    <meta name="description" content="" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body class="app-body">
+    <header class="app-barra">
+      <a class="app-barra__volver" href="index.html" aria-label="Volver a la portada">
+        <span aria-hidden="true">←</span>
+        <span data-cfg="nombre"></span>
+      </a>
+
+      <!-- Indicador de origen de los datos. Cambia solo cuando el backend
+           del agente 2 empieza a responder. -->
+      <div class="app-barra__estado" id="estado-fuente">
+        <span class="punto" aria-hidden="true"></span>
+        <span class="mono" id="estado-texto">simulado</span>
+      </div>
+    </header>
+
+    <main class="escenario">
+      <!-- ── ORBE ────────────────────────────────────────────────────────
+           El elemento vivo. Pulsa con los MISMOS milisegundos que se le
+           pasan a navigator.vibrate(), así que la vibración se ve.
+      -->
+      <div class="orbe-zona">
+        <div class="orbe" id="orbe" data-estado="dormido">
+          <div class="orbe__halo" aria-hidden="true"></div>
+          <div class="orbe__anillo" aria-hidden="true"></div>
+          <div class="orbe__nucleo" aria-hidden="true"></div>
+        </div>
+
+        <p class="orbe__glifo" id="orbe-glifo" aria-hidden="true"></p>
+      </div>
+
+      <!-- Lo que se acaba de detectar -->
+      <div class="evento" id="evento" data-vacio="true">
+        <p class="etiqueta evento__categoria" id="evento-categoria">
+          en reposo
+        </p>
+        <h1 class="display evento__etiqueta" id="evento-etiqueta">
+          Nada todavía
+        </h1>
+        <p class="evento__urgencia mono" id="evento-urgencia"></p>
+
+        <div class="evento__partitura" id="evento-partitura"></div>
+      </div>
+
+      <!-- Control principal -->
+      <div class="control">
+        <button class="boton-escuchar" id="boton-escuchar" type="button">
+          <span class="boton-escuchar__texto" id="boton-escuchar-texto">
+            Empezar a escuchar
+          </span>
+        </button>
+        <p class="control__nota mono" id="control-nota"></p>
+      </div>
+
+      <!-- Leyenda: enseña el vocabulario háptico antes de usarlo. Un código
+           nuevo no sirve de nada si la persona no sabe qué significa cada
+           patrón, así que está a la vista desde el primer segundo y se
+           resalta el que se acaba de disparar. -->
+      <ul class="leyenda" id="leyenda" aria-label="Vocabulario de vibraciones"></ul>
+    </main>
+
+    <!-- ── HISTORIAL ───────────────────────────────────────────────────── -->
+    <section class="historial" aria-labelledby="historial-titulo">
+      <div class="historial__cabeza">
+        <h2 class="etiqueta" id="historial-titulo">Lo que ha pasado</h2>
+        <button class="historial__limpiar mono" id="limpiar" type="button">
+          limpiar
+        </button>
+      </div>
+      <ul class="historial__lista" id="historial-lista">
+        <li class="historial__vacio">
+          Los eventos aparecen aquí conforme se detectan.
+        </li>
+      </ul>
+    </section>
+
+    <!-- Anuncios para lectores de pantalla. Un usuario que no ve la pantalla
+         necesita saber qué se detectó sin depender del color ni del orbe. -->
+    <p class="solo-lectores" role="status" aria-live="polite" id="anuncio"></p>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/patterns.js"></script>
+    <script src="assets/js/haptic-score.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+  </body>
+</html>

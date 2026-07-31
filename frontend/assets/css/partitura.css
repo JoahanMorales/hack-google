@@ -23,10 +23,11 @@
   position: relative;
   min-width: 2px;
   border-radius: 1px;
-  /* En reposo el bloque es un fantasma del color de su categoría: se lee la
-     forma del patrón sin que grite. */
-  background: color-mix(in srgb, var(--partitura-color) 22%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--partitura-color) 35%, transparent);
+  /* En reposo el bloque es una versión apagada del color de su categoría: se
+     lee la forma del patrón sin que grite. Por debajo de ~35% desaparece
+     contra el fondo índigo, así que este es el piso. */
+  background: color-mix(in srgb, var(--partitura-color) 38%, transparent);
+  border-top: 2px solid color-mix(in srgb, var(--partitura-color) 75%, transparent);
   transition: background 90ms linear, box-shadow 90ms linear;
 }
 
@@ -55,7 +56,7 @@
   left: 0;
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: var(--bone-25);
+  color: var(--bone-45);
   pointer-events: none;
 }
 

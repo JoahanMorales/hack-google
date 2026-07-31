@@ -45,7 +45,12 @@ const CONFIG = {
 
   // ── Backend ─────────────────────────────────────────────────────────────
   api: {
-    // Endpoint del agente 2. Relativo, para que funcione detrás del túnel.
+    // Endpoint del agente 2.
+    //   · Ruta relativa ('/clasificar') si el backend sirve también estos
+    //     archivos estáticos — es lo que queremos para la demo final, porque
+    //     así funciona igual detrás del túnel sin tocar nada.
+    //   · URL absoluta ('http://localhost:8100/clasificar') mientras
+    //     desarrollan por separado. En ese caso el backend necesita CORS.
     endpoint: '/clasificar',
     // En true la UI corre con datos simulados, sin backend. Se apaga solo
     // en cuanto el endpoint real responde (ver api.js).
