@@ -317,7 +317,14 @@ function mostrarEvento(resultado) {
   el.evento.dataset.vacio = 'false';
   el['evento-categoria'].textContent = cat.nombre;
   el['evento-etiqueta'].textContent = resultado.etiqueta;
-  el['evento-urgencia'].textContent = `urgencia ${resultado.urgencia}`;
+  // Una respuesta degradada tiene la forma del contrato pero no es una
+  // clasificación real. Decirlo en pantalla en vez de fingir que el sistema
+  // detectó "ambiente": si Gemma se cayó, el usuario tiene que saber que
+  // dejó de oír, no creer que hay silencio.
+  el['evento-urgencia'].textContent = resultado.degradado
+    ? 'sin clasificar · el backend no pudo oír'
+    : `urgencia ${resultado.urgencia}`;
+  el['evento-urgencia'].dataset.degradado = String(Boolean(resultado.degradado));
 
   el['orbe-glifo'].textContent = cat.glifo;
   el['orbe-glifo'].classList.add('visible');

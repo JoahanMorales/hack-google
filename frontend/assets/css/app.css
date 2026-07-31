@@ -212,6 +212,12 @@
   min-height: 1em;
 }
 
+/* El backend respondió con la forma del contrato pero sin clasificar de
+   verdad. No es un error de la app, pero tampoco es una detección. */
+.evento__urgencia[data-degradado="true"] {
+  color: var(--sig-alarma);
+}
+
 .evento__partitura {
   margin-top: var(--s-6);
   min-height: 30px;

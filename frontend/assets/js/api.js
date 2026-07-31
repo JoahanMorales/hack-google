@@ -61,7 +61,12 @@ class ClienteClasificacion {
       const respuesta = await fetch(this.endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio_base64: audioBase64 }),
+        body: JSON.stringify({
+          audio_base64: audioBase64,
+          // El backend mapea este mime al "format" que le manda a Gemma. Si
+          // no lo mandamos asume audio/webm y etiquetaría mal nuestro WAV.
+          mime_type: 'audio/wav',
+        }),
         signal: AbortSignal.timeout(this.timeoutMs),
       });
 
@@ -72,7 +77,14 @@ class ClienteClasificacion {
         this.backendVivo = true;
         this.alCambiarModo(this.modo);
       }
-      return this._normalizar(datos);
+
+      // El backend siempre responde con la forma del contrato, incluso cuando
+      // no pudo clasificar de verdad (Gemma caída, saturada, audio inválido).
+      // Ese caso viene marcado en la cabecera, y hay que distinguirlo: si no,
+      // una cadena de fallos se ve en pantalla como "todo es ambiental" y
+      // nadie se entera de que el sistema dejó de oír.
+      const degradado = respuesta.headers.get('X-Vibra-Estado') === 'degradado';
+      return { ...this._normalizar(datos), degradado };
     } catch (error) {
       // Nunca dejar la UI colgada: si el backend truena, se degrada a
       // simulado y se avisa en pantalla, pero la demo sigue viva.
