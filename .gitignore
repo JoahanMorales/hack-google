@@ -1,4 +1,4 @@
-# Secrets — never commit
+# Secretos — nunca commitear
 .env
 
 # Python
@@ -7,10 +7,15 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .coverage
+.venv/
+venv/
+
+# Audio de prueba grabado local
+samples/
+
+# Salida de dev-check.sh
+.vibra-check/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Local test audio recordings
-samples/
