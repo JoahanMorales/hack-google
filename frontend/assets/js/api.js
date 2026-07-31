@@ -115,13 +115,13 @@ class ClienteClasificacion {
   _simular() {
     const guion = [
       { categoria: 'ambiental', urgencia: 'baja', etiqueta: 'tráfico lejano' },
-      { categoria: 'social', urgencia: 'media', etiqueta: 'tocan la puerta' },
-      { categoria: 'ambiental', urgencia: 'baja', etiqueta: 'conversación de fondo' },
-      { categoria: 'atencion', urgencia: 'media', etiqueta: 'alguien dice tu nombre' },
+      { categoria: 'social', urgencia: 'media', etiqueta: 'conversación cerca' },
+      { categoria: 'ambiental', urgencia: 'baja', etiqueta: 'aire acondicionado' },
+      { categoria: 'atencion', urgencia: 'media', etiqueta: 'tocan la puerta' },
       { categoria: 'ambiental', urgencia: 'baja', etiqueta: 'ventilador' },
       { categoria: 'alarma', urgencia: 'alta', etiqueta: 'alarma de humo' },
-      { categoria: 'social', urgencia: 'baja', etiqueta: 'teléfono sonando' },
-      { categoria: 'atencion', urgencia: 'alta', etiqueta: 'te gritan desde atrás' },
+      { categoria: 'social', urgencia: 'baja', etiqueta: 'risas en el pasillo' },
+      { categoria: 'atencion', urgencia: 'alta', etiqueta: 'alguien dice tu nombre' },
     ];
 
     this._i = (this._i ?? -1) + 1;

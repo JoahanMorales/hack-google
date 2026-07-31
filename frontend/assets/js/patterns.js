@@ -27,11 +27,14 @@ const CATEGORIAS = {
     patron: [100, 50, 100, 50, 100, 50, 400],
   },
 
+  // Ojo con estas dos: las descripciones siguen la semántica que definió el
+  // agente 3 en gemma/_prompt.py, que es el dueño del contrato. 'atencion' es
+  // algo que te reclama directamente; 'social' son voces alrededor.
   atencion: {
     id: 'atencion',
-    nombre: 'Te hablan',
-    descripcion: 'Alguien te llama o se dirige a ti.',
-    ejemplos: 'tu nombre · "oye" · alguien detrás de ti',
+    nombre: 'Te buscan',
+    descripcion: 'Algo o alguien te reclama directamente.',
+    ejemplos: 'timbre · tocan la puerta · teléfono · tu nombre',
     color: 'var(--sig-atencion)',
     glifo: '◆',
     // Dos golpes medianos separados: se siente como "tap, tap" en el hombro.
@@ -40,9 +43,9 @@ const CATEGORIAS = {
 
   social: {
     id: 'social',
-    nombre: 'Aviso',
-    descripcion: 'Algo pide tu atención, sin urgencia.',
-    ejemplos: 'timbre · tocan la puerta · teléfono',
+    nombre: 'Voces',
+    descripcion: 'Hay gente hablando cerca.',
+    ejemplos: 'conversación · risas · alguien grita · niños',
     color: 'var(--sig-social)',
     glifo: '●',
     // Tamborileo parejo, reconocible como "hay alguien".

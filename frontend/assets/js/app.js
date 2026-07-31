@@ -199,7 +199,7 @@ function grabarClip() {
     grabador.onstop = async () => {
       try {
         const blob = new Blob(trozos, { type: grabador.mimeType });
-        resolve(await blobABase64(blob));
+        resolve(await blobAWavBase64(blob));
       } catch (error) {
         reject(error);
       }
@@ -214,14 +214,95 @@ function grabarClip() {
   });
 }
 
-function blobABase64(blob) {
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    // Se manda solo la carga útil, sin el prefijo data:audio/webm;base64,
-    lector.onloadend = () => resolve(String(lector.result).split(',')[1] ?? '');
-    lector.onerror = () => reject(new Error('no se pudo leer el audio'));
-    lector.readAsDataURL(blob);
-  });
+/**
+ * Convierte el blob de MediaRecorder (webm/opus) a WAV PCM 16 bit mono a
+ * 16 kHz, en base64 y sin el prefijo data:.
+ *
+ * ¿Por qué no mandar el webm tal cual? Porque el backend tendría que
+ * transcodificar con ffmpeg antes de poder tocar las muestras, y eso es una
+ * dependencia de sistema más que puede faltar justo el día de la demo. El
+ * navegador ya trae el decodificador, así que sale gratis hacerlo aquí.
+ *
+ * 16 kHz mono es el estándar de facto para modelos de audio y deja el clip en
+ * ~110 KB por 3.5 s, que viaja bien por el túnel.
+ */
+async function blobAWavBase64(blob) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    const buffer = await ctx.decodeAudioData(await blob.arrayBuffer());
+    const muestras = remuestrearAMono(buffer, 16000);
+    return arrayBufferABase64(codificarWav(muestras, 16000));
+  } finally {
+    ctx.close();
+  }
+}
+
+/** Mezcla a mono y remuestrea por interpolación lineal. */
+function remuestrearAMono(buffer, srDestino) {
+  const canales = buffer.numberOfChannels;
+  const origen = buffer.getChannelData(0);
+  const largoDestino = Math.round((origen.length * srDestino) / buffer.sampleRate);
+  const salida = new Float32Array(largoDestino);
+  const razon = origen.length / largoDestino;
+
+  for (let i = 0; i < largoDestino; i++) {
+    const pos = i * razon;
+    const i0 = Math.floor(pos);
+    const i1 = Math.min(i0 + 1, origen.length - 1);
+    const frac = pos - i0;
+
+    let v = origen[i0] * (1 - frac) + origen[i1] * frac;
+    // Promediar el resto de canales si el micrófono entregó estéreo.
+    for (let c = 1; c < canales; c++) {
+      const otro = buffer.getChannelData(c);
+      v += otro[i0] * (1 - frac) + otro[i1] * frac;
+    }
+    salida[i] = v / canales;
+  }
+  return salida;
+}
+
+/** Empaqueta Float32 [-1,1] como WAV PCM 16 bit. */
+function codificarWav(muestras, sampleRate) {
+  const buffer = new ArrayBuffer(44 + muestras.length * 2);
+  const vista = new DataView(buffer);
+  const texto = (offset, s) => {
+    for (let i = 0; i < s.length; i++) vista.setUint8(offset + i, s.charCodeAt(i));
+  };
+
+  texto(0, 'RIFF');
+  vista.setUint32(4, 36 + muestras.length * 2, true);
+  texto(8, 'WAVE');
+  texto(12, 'fmt ');
+  vista.setUint32(16, 16, true); // tamaño del bloque fmt
+  vista.setUint16(20, 1, true); // PCM sin comprimir
+  vista.setUint16(22, 1, true); // mono
+  vista.setUint32(24, sampleRate, true);
+  vista.setUint32(28, sampleRate * 2, true); // bytes por segundo
+  vista.setUint16(32, 2, true); // alineación de bloque
+  vista.setUint16(34, 16, true); // bits por muestra
+  texto(36, 'data');
+  vista.setUint32(40, muestras.length * 2, true);
+
+  let offset = 44;
+  for (let i = 0; i < muestras.length; i++) {
+    const s = Math.max(-1, Math.min(1, muestras[i]));
+    vista.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    offset += 2;
+  }
+  return buffer;
+}
+
+function arrayBufferABase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binario = '';
+  // Por trozos: pasar cientos de miles de argumentos a fromCharCode revienta
+  // la pila de llamadas.
+  const trozo = 0x8000;
+  for (let i = 0; i < bytes.length; i += trozo) {
+    binario += String.fromCharCode.apply(null, bytes.subarray(i, i + trozo));
+  }
+  return btoa(binario);
 }
 
 // ── Pintar el evento ─────────────────────────────────────────────────────────
