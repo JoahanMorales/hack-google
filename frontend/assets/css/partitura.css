@@ -1,0 +1,82 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   PARTITURA HÁPTICA — elemento firma, compartido entre la landing y la app.
+   Los bloques son tiempo de vibración, los huecos son silencio, y el ancho de
+   cada uno es proporcional a sus milisegundos reales.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.partitura {
+  position: relative;
+  width: 100%;
+  height: var(--partitura-alto, 44px);
+  --partitura-color: var(--bone-45);
+}
+
+.partitura__pista {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  gap: 0;
+}
+
+.partitura__bloque {
+  position: relative;
+  min-width: 2px;
+  border-radius: 1px;
+  /* En reposo el bloque es un fantasma del color de su categoría: se lee la
+     forma del patrón sin que grite. */
+  background: color-mix(in srgb, var(--partitura-color) 22%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--partitura-color) 35%, transparent);
+  transition: background 90ms linear, box-shadow 90ms linear;
+}
+
+/* Encendido: el bloque que está sonando en este instante. */
+.partitura__bloque.activo {
+  background: var(--partitura-color);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--partitura-color) 55%, transparent);
+}
+
+.partitura__silencio {
+  min-width: 1px;
+  /* El silencio no está vacío: es una línea de base, como en un sismógrafo. */
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    var(--line) calc(50% - 1px),
+    var(--line) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+
+/* Valores en ms bajo cada bloque. Solo donde hay espacio. */
+.partitura__ms {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--bone-25);
+  pointer-events: none;
+}
+
+/* Cabezal de reproducción: recorre la partitura en tiempo real. */
+.partitura__cabezal {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 0;
+  width: 1px;
+  background: var(--bone);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.partitura.esta-sonando .partitura__cabezal {
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partitura__cabezal {
+    display: none;
+  }
+}
