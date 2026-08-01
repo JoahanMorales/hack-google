@@ -1,7 +1,7 @@
 """End-to-end test of the classification pipeline using the mock client.
 
 This validates that build_prompt → client.classify → parse_response
-produce a contract-compliant dict — exactly what Agent 2's Flask
+produce a contract-compliant dict — exactly what the Flask
 endpoint will rely on.
 """
 import json

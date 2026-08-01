@@ -1,7 +1,7 @@
 # 🔴 Gemma 4 no puede oír — y el sistema no se da cuenta
 
-**Para los agentes 2 y 3.** Esto no es código del frontend; es un hallazgo que
-bloquea el proyecto entero y viene con la solución ya probada.
+Registro técnico del hallazgo que definió la arquitectura del proyecto, con la
+evidencia y las variantes que se midieron para llegar a la solución.
 
 ## El problema
 
@@ -100,11 +100,10 @@ volver a medir con grabaciones reales: alarma de humo de verdad, gente hablando
 de verdad, el timbre de una puerta de verdad. El arnés está en
 `handoff/espectrograma.py`, solo hay que cambiarle las fuentes.
 
-## Qué hay que cambiar
+## El cambio
 
-**Agente 3** (`gemma/client.py`) y **agente 2** (`gemma_client.py`): cambiar el
-content part `input_audio` por `image_url` con el espectrograma, y meter la
-tabla de decisión al prompt.
+En `gemma_client.py`: el content part `input_audio` se cambió por `image_url`
+con el espectrograma, y la tabla de decisión se movió al prompt.
 
 **Dos detalles que importan del prompt:**
 
@@ -113,9 +112,9 @@ tabla de decisión al prompt.
 2. La línea `"NO elijas ambiental si ves estructura repetitiva nítida"`. El
    modelo tiene un sesgo fuerte hacia la categoría más segura.
 
-**Del frontend ya no necesitan nada más:** manda WAV PCM 16 bit mono 16 kHz en
-`audio_base64` más `mime_type: "audio/wav"`, así que pueden generar el
-espectrograma directo sin ffmpeg.
+**Del lado del frontend:** manda WAV PCM 16 bit mono 16 kHz en `audio_base64`
+más `mime_type: "audio/wav"`, así que el espectrograma se genera directo, sin
+ffmpeg en el servidor.
 
 ## Para el writeup
 

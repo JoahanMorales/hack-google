@@ -1,5 +1,5 @@
 /**
- * Cliente del contrato con el backend (agente 2).
+ * Cliente del contrato con el backend.
  *
  *   POST /clasificar
  *   →  { "audio_base64": "..." }
@@ -30,7 +30,7 @@ class ClienteClasificacion {
 
   /**
    * Prueba si el backend está arriba. Se llama al cargar y cada vez que
-   * falla una petición, para reconectarse solo cuando el agente 2 despliegue.
+   * falla una petición, para reconectarse solo en cuanto el backend vuelva.
    */
   async sondear() {
     const antes = this.backendVivo;

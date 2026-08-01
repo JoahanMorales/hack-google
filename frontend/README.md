@@ -1,4 +1,4 @@
-# Frontend — Agente 1
+# Frontend
 
 HTML, CSS y JS planos. Sin build, sin dependencias, sin `npm install`. Se abre
 y funciona.
@@ -57,9 +57,7 @@ escenario** si el micrófono falla o la sala está muy ruidosa.
 
 ---
 
-## Para el agente 2 (backend)
-
-El frontend ya habla tu contrato. No tienes que tocar nada de aquí.
+## Contrato con el backend
 
 ```
 POST /clasificar
@@ -70,33 +68,32 @@ POST /clasificar
      "reasoning": "..." }              (opcional)
 ```
 
-Mientras no exista el endpoint, la UI corre con datos simulados. **En cuanto
-respondas un 200 se cambia sola** — no hay que recargar ni cambiar un flag. El
+Si el endpoint no está disponible, la UI corre con datos simulados. **En cuanto
+responde un 200 se cambia sola** — no hay que recargar ni cambiar un flag. El
 indicador de la barra pasa de `simulado` a `real`.
 
-Dónde apuntar el frontend, en `assets/js/config.js` → `api.endpoint`:
+Dónde apunta el frontend, en `assets/js/config.js` → `api.endpoint`:
 
-- Si tu backend sirve también esta carpeta como estáticos, déjalo en
+- Si el backend sirve también esta carpeta como estáticos, se deja en
   `/clasificar` y no hay CORS que resolver. **Es la opción recomendada para la
   demo final.**
-- Si corres aparte durante el desarrollo, ponlo absoluto
-  (`http://localhost:8100/clasificar`) y habilita CORS de tu lado.
+- Corriendo aparte durante el desarrollo, va absoluto
+  (`http://localhost:5000/clasificar`) y el backend habilita CORS.
 
-Dos cosas que el frontend ya asume de ti:
+Dos cosas que el frontend asume del backend:
 
-- **Nunca dejes la petición colgada.** Hay un timeout de 20s; si lo pasas, la
-  UI degrada a simulado y sigue viva, pero perdemos el evento.
-- **Responde siempre el JSON completo**, aunque Gemma falle. Si mandas una
-  categoría que no existe, se normaliza a `ambiental` en vez de romper.
+- **La petición nunca se queda colgada.** Hay un timeout de 20s; al pasarlo la
+  UI degrada a simulado y sigue viva, aunque se pierde ese evento.
+- **Siempre llega el JSON completo**, aunque Gemma falle. Una categoría fuera
+  del contrato se normaliza a `ambiental` en vez de romper la UI.
 
-## Para el agente 3 (Gemma)
+## Las categorías
 
 Las cuatro categorías del contrato están en `assets/js/patterns.js`, cada una
-con su patrón de vibración. Si cambias los nombres de las categorías, ese es el
+con su patrón de vibración. Si cambian los nombres de las categorías, ese es el
 único archivo del frontend que hay que tocar.
 
-El campo `reasoning` ya se recibe y se guarda en el historial en memoria —
-está listo para que lo saquen al writeup.
+El campo `reasoning` se recibe y se guarda en el historial en memoria.
 
 ## Decisiones que vale la pena conocer
 

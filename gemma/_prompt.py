@@ -1,6 +1,6 @@
 # --- Prompt pieces for the Gemma 4 classifier -------------------------------
 #
-# Everything lives in this module so Agent 2 can see exactly what text
+# Everything lives in this module so the backend can see exactly what text
 # is sent to the model.  Each piece is small enough to reason about and
 # can be swapped / trimmed if the 4096-token context becomes tight.
 

@@ -58,7 +58,7 @@ const CONFIG = {
 
   // ── Backend ─────────────────────────────────────────────────────────────
   api: {
-    // Endpoint del agente 2.
+    // Endpoint de clasificación del backend.
     //   · Ruta relativa ('/clasificar') si el backend sirve también estos
     //     archivos estáticos — es lo que queremos para la demo final, porque
     //     así funciona igual detrás del túnel sin tocar nada.

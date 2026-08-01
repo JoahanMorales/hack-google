@@ -1,4 +1,4 @@
-"""Backend VibraContexto - Agente 2.
+"""Backend de Coralia.
 
 Expone POST /clasificar (contrato congelado, ver README raiz) y GET /salud.
 Toda respuesta de /clasificar tiene la forma del contrato, tanto en exito
@@ -21,7 +21,7 @@ from validacion import AudioInvalido, respuesta_contrato, validar_audio_base64  
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vibra.app")
 
-# El backend sirve tambien el frontend del Agente 1. Asi todo queda en un solo
+# El backend sirve tambien el frontend. Asi todo queda en un solo
 # origen: no hay CORS que resolver, el frontend usa la ruta relativa
 # /clasificar, y basta apuntar el tunel a este puerto para que la demo entera
 # quede publica con una sola URL.

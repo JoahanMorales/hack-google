@@ -10,14 +10,14 @@ from gemma.parser import Classification, ValidationError, parse_response
 
 logger = logging.getLogger("vibra.gemma")
 
-# Re-export the public function name Agent 2 expects
+# Re-export the public function name the backend expects
 build_prompt = _build_prompt
 
 
 class GemmaClassifier:
     """High-level facade: audio base64 → contract JSON dict.
 
-    Usage (from Agent 2's Flask/Node route):
+    Usage (from the Flask route):
 
         classifier = GemmaClassifier()
         result = classifier.classify(audio_base64)

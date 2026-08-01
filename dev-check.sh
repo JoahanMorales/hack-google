@@ -61,9 +61,12 @@ done
 
 echo
 echo "=== contenido renderizado ==="
-# Comprobar que config.js realmente inyectó el nombre en el DOM.
+# Comprobar que config.js realmente inyectó el nombre en el DOM. El nombre se
+# lee de config.js para que renombrar el proyecto no rompa esta verificación.
+NOMBRE=$(grep -oP "^\s*nombre:\s*'\K[^']+" "$RAIZ/assets/js/config.js" | head -1)
+echo "  nombre configurado: $NOMBRE"
 for pagina in index app; do
-  if grep -q "VibraContexto" "$SALIDA/$pagina.dom.html"; then
+  if grep -q "$NOMBRE" "$SALIDA/$pagina.dom.html"; then
     echo "  $pagina: nombre inyectado OK"
   else
     echo "  $pagina: FALLA — el nombre no llegó al DOM"

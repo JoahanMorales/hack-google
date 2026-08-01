@@ -6,8 +6,8 @@
  *
  *   [100, 50, 100]  =  vibra 100ms · calla 50ms · vibra 100ms
  *
- * Las categorías son las cuatro del contrato con el backend. Si el agente 3
- * cambia el contrato, este archivo es lo único que se toca del lado del front.
+ * Las categorías son las cuatro del contrato con el backend. Si cambia el
+ * contrato, este archivo es lo único que se toca del lado del front.
  *
  * Criterio de diseño de los patrones: tienen que distinguirse SIN VERLOS, con
  * el teléfono en el bolsillo. Por eso no varían solo en duración sino en
@@ -27,9 +27,9 @@ const CATEGORIAS = {
     patron: [100, 50, 100, 50, 100, 50, 400],
   },
 
-  // Ojo con estas dos: las descripciones siguen la semántica que definió el
-  // agente 3 en gemma/_prompt.py, que es el dueño del contrato. 'atencion' es
-  // algo que te reclama directamente; 'social' son voces alrededor.
+  // Ojo con estas dos: las descripciones siguen la semántica definida en
+  // gemma/_prompt.py. 'atencion' es algo que te reclama directamente;
+  // 'social' son voces alrededor.
   atencion: {
     id: 'atencion',
     nombre: 'Te buscan',

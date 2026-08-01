@@ -23,8 +23,7 @@ Dos aprendizajes que valen mas que el prompt en si:
  2. Alargar el prompt lo empeora. Cada regla extra le quita precision. Si algo
     no funciona, la respuesta casi nunca es agregar mas texto.
 
-Semantica de las categorias: la de gemma/_prompt.py (Agente 3), dueno del
-contrato. Ojo que 'atencion' y 'social' no son lo que suenan: atencion = algo
+Semantica de las categorias: definida en gemma/_prompt.py. Ojo que 'atencion' y 'social' no son lo que suenan: atencion = algo
 te reclama directamente, social = hay voces alrededor.
 
 PENDIENTE: los 4 audios de prueba son sinteticos. El de "voz" es un zumbido

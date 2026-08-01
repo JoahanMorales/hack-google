@@ -3,7 +3,7 @@ from .client import GemmaClient
 from .parser import parse_response, ValidationError, Classification
 from .classifier import GemmaClassifier
 
-# Convenience: module-level singleton so Agent 2 can do
+# Convenience: module-level singleton so callers can do
 #   from gemma import classify; classify(audio_b64)
 _default_classifier: "GemmaClassifier | None" = None
 

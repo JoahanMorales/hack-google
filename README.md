@@ -2,250 +2,207 @@
 
 **Siente tu espacio.**
 
-Coralia es una aplicación web que traduce el sonido del entorno en vibraciones
-distintivas, para que personas sordas sepan qué está pasando a su alrededor en
-tiempo real. Usa **Gemma 4** para escuchar e interpretar el audio.
+Coralia traduce el sonido del entorno en vibraciones distintivas, para que las
+personas sordas sepan qué está pasando a su alrededor en tiempo real. **Gemma 4**
+escucha e interpreta el audio, y cada tipo de sonido dispara un patrón de
+vibración diferente.
 
-También cubre otros casos: avisarle a un padre o madre cuando el bebé llora, o
-detectar cuando alguien te llama por tu nombre entre el ruido.
+También cubre otros casos: avisarle a un padre o una madre cuando el bebé llora,
+o detectar cuando alguien te llama por tu nombre entre el ruido.
 
-Corre en el navegador (Web Vibration API) contra Gemma 4 en una Jetson local.
-
-## Cómo correrlo
-
-```bash
-cp .env.example .env     # y pon GEMMA_BASE_URL=http://127.0.0.1:11434/v1
-./arrancar-demo.sh
-```
-
-Levanta el backend, sirve el frontend en el mismo origen y publica el túnel.
-Abrir en **Android** — iOS no expone la API de vibración.
-
-Plan B si falla el micrófono en el escenario: `/app.html?demo=1`
-
-## Cómo se clasifica el sonido
-
-Gemma 4 **no tiene encoder de audio**: Ollama acepta el audio, responde 200 OK
-y el modelo nunca lo recibe, así que inventa la respuesta. El clip se convierte
-a **espectrograma PNG** y se manda como imagen, que sí procesa.
-
-Ver [`handoff/HALLAZGO-AUDIO.md`](handoff/HALLAZGO-AUDIO.md) para la evidencia
-y las variantes de prompt que se midieron.
-
-La detección del nombre propio va aparte, con la Web Speech API en el
-navegador: reconocer una palabra no necesita un LLM y así el aviso es
-instantáneo en vez de esperar el ciclo de 3.5 s del clip.
+**Demo:** https://api.axolutions.dev · **Pruebas y mediciones:** [PRUEBAS.md](PRUEBAS.md)
 
 ---
 
 ## El problema
 
-Las personas sordas pierden constantemente contexto sonoro de seguridad y convivencia: alarmas, alguien llamándolas por su nombre, un claxon, el tono urgente de una conversación cerca. Las soluciones actuales (luces, smartwatches genéricos) solo avisan "pasó algo" — vibran igual para un portazo que para una alarma de incendio.
+Las alertas que existen hoy para personas sordas —luces estroboscópicas,
+smartwatches genéricos— avisan que **hubo** un sonido, pero no **cuál**. Vibran
+igual para un portazo que para una alarma de incendio.
 
-## La solución
+Eso obliga a la persona a interrumpir lo que está haciendo y buscar con la vista
+qué lo causó, cada vez. En la práctica mucha gente termina apagando las
+notificaciones: una alerta que no distingue entre urgente y trivial cansa más de
+lo que sirve.
 
-Gemma 4 escucha clips cortos de audio del entorno, los clasifica (qué es + qué tan urgente) y la app dispara un **patrón de vibración distinto según la categoría**, para que la persona sepa qué pasó sin tener que mirar la pantalla.
+El resultado es que la información sonora de seguridad y convivencia —una
+alarma, alguien llamándote, el llanto de un bebé en el cuarto de al lado— se
+pierde.
+
+## La propuesta
+
+No es una alerta. Es un **vocabulario**.
+
+Cuatro patrones de vibración que se distinguen **por ritmo, no por duración**,
+que es lo que permite reconocerlos con el teléfono en el bolsillo, sin mirar la
+pantalla:
+
+| Categoría | Qué es | Patrón (ms) |
+|---|---|---|
+| **Alarma** | Humo, sirena, algo que exige moverse ya | `[100,50,100,50,100,50,400]` |
+| **Te buscan** | Timbre, tocan la puerta, teléfono, tu nombre | `[150,100,150]` |
+| **Voces** | Conversación, risas, gente cerca | `[80,80,80,80,80]` |
+| **Ambiente** | Tráfico, viento, ruido de fondo | `[40]` |
+
+Tres decisiones de diseño que sostienen esto:
+
+**La urgencia no cambia el patrón, lo repite.** Cambiar el ritmo según la
+urgencia rompería el reconocimiento: la persona aprendió *un* patrón por
+categoría.
+
+**Lo ambiental casi no vibra** (`[40]`). Saturar de vibraciones es la forma más
+rápida de que alguien apague la app.
+
+**Solo son cuatro.** Un código nuevo no sirve si nadie lo aprende. Cuatro
+patrones se memorizan en un minuto, y la app los muestra siempre en pantalla.
+
+> No es braille. El braille es lectura táctil para personas ciegas. Esto es un
+> código de vibración pensado para personas sordas.
 
 ---
 
-## Arquitectura (versión de 3 horas)
+## Cómo funciona
 
 ```
-[Micrófono navegador] 
-       │  MediaRecorder, clips de ~3-4s
-       ▼
-[Frontend web] ──fetch(audio)──▶ [Backend ligero (Node/Express o Flask)]
-                                          │
-                                          │ POST audio + prompt
-                                          ▼
-                              [Gemma 4 local] ──▶ (vía túnel Cloudflare)
-                                          │
-                                          │ JSON: {categoria, urgencia, etiqueta}
-                                          ▼
-[Frontend recibe JSON] ──▶ navigator.vibrate(patrón según categoría/urgencia)
-                       └─▶ tarjeta visual en pantalla con el evento
+[Micrófono]  clips de 3.5 s
+     │
+     ▼
+[Navegador]  WAV PCM 16 bit mono 16 kHz
+     │       (el navegador ya trae el decodificador: cero ffmpeg en el servidor)
+     ▼
+[Backend]    audio ──▶ ESPECTROGRAMA PNG
+     │                 (STFT, escala log en frecuencia, 80 dB de rango)
+     ▼
+[Gemma 4]    lee la imagen ──▶ {categoria, urgencia, etiqueta, reasoning}
+     │       corriendo local en una Jetson Orin Nano de 8 GB
+     ▼
+[Navegador]  navigator.vibrate(patrón) + orbe + partitura, con los mismos ms
 ```
 
-Nada de streaming continuo verdadero ni pipeline de dos etapas (VAD + modelo) — para 3 horas, capturar clips cortos en loop y mandarlos directo a Gemma es lo más rápido de tener funcionando y se ve bien en demo.
+En paralelo, la **Web Speech API** reconoce el nombre de la persona en el
+navegador. Ese aviso no pasa por Gemma: reconocer una palabra no necesita un LLM
+y la latencia importa — si alguien te llama y te enteras cuatro segundos
+después, ya no sirve.
 
 ---
 
-## Stack recomendado (rápido de armar)
+## Por qué es técnicamente interesante
 
-- **Frontend**: HTML + JS plano (o React si el equipo ya lo domina de memoria — no aprendan algo nuevo hoy). `MediaRecorder` API para el audio, `navigator.vibrate()` para las vibraciones.
-- **Backend**: Node + Express (o Flask si prefieren Python) — solo un endpoint `POST /clasificar` que reciba el audio en base64/blob, arme el prompt, le pegue a tu túnel de Cloudflare, y regrese JSON.
-- **Gemma 4**: ya la tienen local con el túnel armado — perfecto, eso ya no es riesgo.
+### Gemma 4 no puede oír, y no lo dice
+
+El hallazgo que definió la arquitectura. `gemma4:e2b-it-qat` **no tiene encoder
+de audio**. Ollama acepta el content part `input_audio`, decodifica el WAV,
+responde `200 OK` con JSON válido — y el modelo nunca recibe el sonido: inventa
+la respuesta desde el prompt.
+
+Es la peor clase de falla, porque **no falla**. Los tests pasan, el health check
+reporta verde, y el sistema clasifica a ciegas con respuestas verosímiles. Se
+detectó mandando dos audios acústicamente opuestos y notando que devolvían
+exactamente lo mismo.
+
+**La solución: darle el sonido como imagen.** El clip se convierte a
+espectrograma y se manda por el canal de visión, que sí funciona. El
+espectrograma no es un truco: es la representación estándar en clasificación de
+audio, la misma sobre la que operan las redes convolucionales del área. Lo que
+cambia es que aquí la lee un modelo de propósito general por su capacidad
+multimodal, sin entrenar nada.
+
+Detalles y evidencia en [`handoff/HALLAZGO-AUDIO.md`](handoff/HALLAZGO-AUDIO.md).
+
+### El modelo entero cabe en 8 GB, y eso obligó a decidir
+
+La Jetson Orin Nano Super tiene **8 GB de memoria unificada**: la GPU comparte
+RAM con el sistema. `gemma4:e4b-it-qat` no carga —pide ~7 GB contra ~6.4 GB
+reales disponibles— así que el proyecto corre sobre `e2b-it-qat`, que ocupa
+1.6 GB cargado y da ~29 tok/s.
+
+Ese techo cambió el diseño: el prompt tuvo que hacerse **más corto**, no más
+largo (ver [PRUEBAS.md](PRUEBAS.md)), y la clasificación se apoya en una imagen
+pequeña en vez de contexto extenso.
+
+### Privacidad como condición, no como argumento
+
+El audio del cuarto de alguien **nunca sale del dispositivo**. Eso no es una
+casilla de cumplimiento: es la condición para que una persona deje esto
+encendido todo el día en su casa. Un sistema de escucha ambiental permanente que
+manda audio a la nube no se adopta, y con razón.
+
+*(Excepción honesta: la detección de nombre usa el reconocimiento de voz de
+Chrome, que procesa en servidores de Google. Es opcional y se puede apagar; la
+clasificación del entorno, que es lo que corre siempre, es 100% local.)*
+
+### La vibración no se puede verificar, así que no se depende de ella
+
+`navigator.vibrate()` devuelve `true` en escritorio y no pasa nada. La API no
+permite confirmar que el dispositivo se movió. Por eso el patrón se emite por
+**tres canales** alimentados por el mismo array de milisegundos: vibración,
+destello en pantalla y un zumbido de 90 Hz.
+
+Eso convierte una limitación en una función de accesibilidad: el patrón se
+percibe por tacto, vista u oído, según lo que la persona y el aparato permitan.
 
 ---
 
-## Configuración del endpoint de Gemma 4
-
-El endpoint es **compatible con la API de OpenAI**, así que en el backend se usa el SDK de siempre solo cambiando el `base_url`:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url=os.environ["GEMMA_BASE_URL"],  # NO hardcodear la URL — va por variable de entorno
-    api_key=os.environ.get("GEMMA_API_KEY", "x"),  # cualquier string, no valida nada
-)
-
-response = client.chat.completions.create(
-    model="gemma4:e2b-it-qat",
-    messages=[
-        {"role": "user", "content": prompt}
-    ],
-)
-
-content = response.choices[0].message.content
-reasoning = response.choices[0].message.reasoning  # Gemma 4 trae razonamiento integrado, aparte del content — vale la pena loguearlo/mostrarlo en el writeup
-```
-
-> ⚠️ **La URL del túnel NO va en el repo, ni en issues, ni en ningún canal público** — mientras esté corriendo, cualquiera con la URL tiene acceso sin auth. Pásenla por variable de entorno (`.env`, que sí debe estar en `.gitignore`) o directo por chat entre el equipo.
-
-**Límites a tener en cuenta mientras se desarrolla:**
-- Es un solo dispositivo de 8GB corriendo el modelo — las requests en paralelo se encolan (~29 tok/s **total**, no por persona). Para pruebas individuales está bien; si el equipo va a probar carga o varios agentes a la vez, hay que coordinar.
-- Contexto de 4096 tokens (se está subiendo a 32K — confirmar antes de armar prompts largos con few-shot o mucho historial, porque con tool calling se llena rápido).
-- Si el endpoint se cae o va muy lento, avisar para reiniciarlo — no asumir que es un bug del código propio.
-
----
-
-## Trabajo en paralelo con 3 agentes (git worktree)
-
-Con 3 agentes generando código a la vez, la clave es que **cada uno trabaje en su propio worktree y su propia rama**, para que nadie pise el trabajo de otro ni tengan que esperarse entre sí.
+## Correrlo
 
 ```bash
-# Desde la carpeta del repo ya clonado, en la rama base (main)
-git checkout -b main   # si no existe todavía
-
-git worktree add ../vibra-frontend feature/frontend
-git worktree add ../vibra-backend  feature/backend
-git worktree add ../vibra-gemma    feature/gemma-integration
+cp .env.example .env     # GEMMA_BASE_URL=http://127.0.0.1:11434/v1
+./arrancar-demo.sh
 ```
 
-Esto crea 3 carpetas hermanas al repo original, cada una con su propia rama ya cambiada — cada agente trabaja dentro de la suya (`cd ../vibra-frontend`, etc.) sin tocar los archivos de las otras dos, aunque las tres compartan el mismo historial de git.
+Levanta el backend, sirve el frontend en el mismo origen y publica el túnel.
 
-**Reglas para que no interfieran entre sí:**
-- Cada agente **solo toca archivos de su carpeta/dominio** (frontend agent no toca `/backend`, etc.) — el contrato de interfaz de abajo es lo único que los conecta.
-- Nadie hace `git push --force` ni reescribe historial compartido.
-- Los merges a `main` pasan por los checkpoints de integración del plan (abajo) — no se mergea nada a media tarea sin avisar al resto.
-- Si un agente necesita algo del dominio de otro (ej. frontend necesita que el backend regrese un campo nuevo), lo pide como cambio al contrato — no lo edita directamente.
+Abrir en **Android**: iOS no expone la API de vibración. En cualquier otro
+dispositivo el patrón se ve y se oye igual.
 
-## Contrato de interfaz (API contract)
+Modo demo sin micrófono: [`/app.html?demo=1`](https://api.axolutions.dev/app.html?demo=1)
 
-Definan esto en el minuto 0 y **no lo cambien a medio sprint** — es lo que permite que los 3 agentes avancen en paralelo sin bloquearse esperando a los demás:
+### Verificar la instalación
 
-```
-POST /clasificar
-Request:  { "audio_base64": "..." }
-Response: {
-  "categoria": "alarma" | "atencion" | "social" | "ambiental",
-  "urgencia": "baja" | "media" | "alta",
-  "etiqueta": "string corta, ej. 'alarma de humo'",
-  "reasoning": "string opcional, el razonamiento de Gemma"
-}
+```bash
+./dev-check.sh     # assets, errores de JS en headless, flujo completo
+pytest -q          # 28 tests
 ```
 
-Con esto fijo, **el agente de frontend puede mockear esta respuesta y construir toda la UI y las vibraciones sin esperar a que el backend o Gemma estén listos** — conecta el mock al final en el checkpoint de integración.
+---
 
-## Roles y tareas por agente
+## Estructura
 
-### 🎨 Agente 1 — Frontend & Experiencia de Vibración
-*Este es el rol con más peso — es lo que el jurado ve y siente, aquí es donde el proyecto debe deslumbrar.*
+```
+app.py               API Flask: POST /clasificar, GET /salud, sirve el frontend
+espectrograma.py     WAV -> PNG (STFT, escala log). El puente al canal de visión
+prompt.py            Prompt de clasificación, con las variantes medidas documentadas
+gemma_client.py      Única capa que habla con Gemma
+validacion.py        Blindaje del contrato: nunca se devuelve algo fuera de forma
 
-- Construir la UI completa contra el contrato mockeado (no esperar al backend real).
-- Implementar `navigator.vibrate()` con los patrones definidos en la sección de Features.
-- Diseño visual con identidad fuerte: fondo oscuro, acentos de color por categoría (rojo/naranja para urgente, azul/verde para neutro), tipografía grande y con peso.
-- Un elemento central "vivo" en pantalla (ej. un círculo/orbe) que **pulsa visualmente al mismo tiempo que vibra el celular** — la vibración se "ve" y se siente a la vez, eso es lo que sorprende en vivo.
-- Micro-animaciones al recibir cada evento (la tarjeta nueva entra con transición, no aparece seca).
-- Historial de eventos recientes, con ícono + color por categoría.
-- (Si da tiempo) pantalla de personalización de patrones por categoría.
+frontend/
+  index.html         Landing, con hero en ASCII generado en tiempo real
+  app.html           La app
+  assets/js/
+    config.js        Identidad del proyecto en un solo lugar
+    patterns.js      El vocabulario háptico
+    haptic-score.js  La partitura: el patrón dibujado a escala real de ms
+    presentacion.js  Destello y zumbido — el patrón sin depender de vibración
+    deteccion-nombre.js  Reconocimiento del nombre en el navegador
+```
 
-### ⚙️ Agente 2 — Backend & Pipeline de audio
-- `MediaRecorder` en el frontend → esto lo coordina con el agente 1, pero la implementación del envío/recepción es suya.
-- Endpoint `POST /clasificar` que cumple el contrato de arriba.
-- Manejo de errores: qué regresa el endpoint si Gemma tarda, se cae, o el audio viene corrupto (nunca dejar al frontend colgado esperando).
-- `.env` con la URL del túnel y la API key — nunca hardcodeada, y `.env` en `.gitignore` desde el commit inicial.
+## Configurar
 
-### 🧠 Agente 3 — Integración Gemma & Prompt Engineering
-- Diseñar y afinar el prompt de clasificación (el que le pega a Gemma con el audio).
-- Parsear la respuesta de Gemma al JSON exacto del contrato — este agente es el dueño del contrato, cualquier cambio a los campos pasa por aquí.
-- Capturar el campo `reasoning` aparte del `content` para el writeup.
-- Prompt few-shot para detección de nombre propio (si da tiempo).
-- Cuidar el límite de contexto (4096 tokens) al armar los prompts — no meter historiales largos de más.
-- Probar con variedad real de audios (alarma, voz, ruido ambiental) antes de dárselo al agente de backend para integrar.
+El nombre del proyecto, el tagline y los textos viven en
+`frontend/assets/js/config.js`. Cambiar una línea los propaga a todo el sitio:
+no hay texto de identidad escrito a mano en el HTML.
+
+Para el video del hero: dejar el archivo en `frontend/assets/media/hero.mp4` y
+se renderiza a ASCII en tiempo real. Sin archivo, corre una animación
+generativa de ondas.
 
 ---
 
-## Plan de desarrollo — sprint de 3 horas, en paralelo
+## A dónde va
 
-| Tiempo | Todos juntos | 🎨 Agente 1 (Frontend) | ⚙️ Agente 2 (Backend) | 🧠 Agente 3 (Gemma) |
-|---|---|---|---|---|
-| **0:00 – 0:15** | Fijar el contrato de interfaz, crear los worktrees, repartir roles. Nadie escribe código todavía. | — | — | — |
-| **0:15 – 1:00** | *(trabajo en paralelo, sin bloquearse)* | UI base + botón "escuchar" + `navigator.vibrate` de prueba, construyendo contra el mock del contrato | `MediaRecorder` + endpoint `/clasificar` recibiendo audio (aunque adentro solo regrese datos falsos por ahora) | Prompt de clasificación, probado a mano con 2-3 audios grabados (sin conectar nada todavía) |
-| **1:00 – 1:45** | | Patrones de vibración reales + el orbe/elemento visual que pulsa en sync | Conectar el endpoint real a Gemma (vía el SDK de OpenAI), manejo de errores/timeouts | Afinar el prompt con los audios de prueba del agente 2, ajustar el JSON de salida |
-| **1:45 – 2:00** | **🔗 Checkpoint de integración #1** — mergear las 3 ramas a `main`, probar el flujo completo de punta a punta. Arreglar lo que truene aquí, no antes. | | | |
-| **2:00 – 2:30** | *(trabajo en paralelo otra vez, ya sobre la integración real)* | Micro-animaciones, historial de eventos, pulido visual | Detección de nombre (few-shot) integrada al endpoint si da tiempo | Ajustar prompt para pocos falsos positivos, cuidar el límite de 4096 tokens |
-| **2:30 – 2:45** | **🔗 Checkpoint de integración #2** — merge final, prueba completa, congelar el código. | | | |
-| **2:45 – 3:00** | Ensayo de pitch todos juntos. Grabar un audio de respaldo por si falla el mic en vivo. | | | |
-
-**Regla de oro con solo 3 horas:** los checkpoints de integración a las 2:00 y a las 2:45 no son opcionales — sin ellos, cada agente puede tener su parte "lista" y aun así no funcionar nada junto. Nadie sigue agregando features nuevas después de las 2:30.
-
----
-
-## Features
-
-### Imprescindibles para el MVP (bloques 1-4 del plan)
-- [ ] Botón de encender/apagar "modo escucha"
-- [ ] Captura de audio en clips cortos y envío al backend
-- [ ] Clasificación por Gemma: categoría + nivel de urgencia (baja/media/alta)
-- [ ] Al menos 4 patrones de vibración bien distintos, cada uno con su color e ícono asociado en pantalla:
-  - **🚨 Alarma/emergencia** (humo, sirena) — rojo — pulsos cortos y repetidos, urgente: `[100,50,100,50,100,50,400]`
-  - **👋 Alguien te llama / te habla** — ámbar — patrón suave de 2 pulsos medianos: `[150,100,150]`
-  - **🌫️ Sonido ambiental neutro** (tráfico, ruido de fondo) — gris/azul — sin vibración, o un pulso único muy leve, para no saturar
-  - **🔔 Sonido social/atención** (timbre, tocan la puerta, teléfono sonando) — verde — patrón rítmico distinto: `[80,80,80,80,80]`
-- [ ] Tarjeta visual en pantalla mostrando qué se detectó (para quien quiera confirmar viendo, no solo sintiendo)
-- [ ] **El "orbe" central**: un elemento visual (círculo/blob con glow) que pulsa *exactamente* al mismo tiempo que vibra el celular, con el color de la categoría — esto es lo que hace que en la demo la gente "vea" la vibración, no solo se les diga que existe. Usa `Array.from` sobre el patrón de vibración para animar el orbe con los mismos tiempos que se le pasan a `navigator.vibrate()`, así van perfectamente sincronizados.
-- [ ] Transición de entrada suave para cada evento nuevo en el historial (nunca que aparezca "seco" — un fade + slide de 200-300ms ya se siente pulido)
-- [ ] Fondo oscuro con acentos de color vivos por categoría — contraste alto, tipografía grande y con peso, para que se lea bien en una demo mostrada desde lejos (proyector, mesa de jueces)
-
-### Si sobra tiempo
-- [ ] Detección de que llaman tu nombre específico (few-shot en el prompt)
-- [ ] Pantalla de personalización: el usuario reasigna qué patrón quiere para cada categoría
-- [ ] Historial de eventos del día (lista simple, sin base de datos — guardarlo en memoria del frontend basta para la demo)
-- [ ] Indicador de urgencia también por color/ícono en pantalla, no solo vibración
-
-### Ideas para mejorar la propuesta (más allá del MVP, para mencionar en el pitch como visión a futuro — no las construyan hoy)
-- **Onboarding que enseña el código de vibraciones**: en vez de asumir que el usuario reconoce los patrones de inmediato, Gemma genera un mini-tutorial conversacional que le enseña sus propios patrones con repetición espaciada — esto resuelve el problema de que un código nuevo no sirve si nadie lo aprende.
-- **Perfil de sonidos personales**: el usuario graba 2-3 ejemplos de "este es mi timbre" o "esta es mi alarma" y Gemma los usa como referencia (in-context, sin fine-tuning) para reconocer variantes parecidas — aprovecha el contexto largo de Gemma 4.
-- **Modo "conversación en grupo"**: detecta cuándo el tono de una conversación cercana se vuelve tenso/urgente (útil en contextos sociales, no solo de seguridad).
-- **Todo on-device**: como Gemma 4 corre local, se puede argumentar fuerte el punto de privacidad — nada del audio del entorno de la persona sale a un servidor externo. Esto es un diferenciador real frente a soluciones que dependen de la nube.
-
----
-
-## 📊 Estado del sprint (Agent 3 feed)
-
-> Este apartado se actualiza en tiempo real para que todo el equipo vea el avance de cada agente sin tener que hacer *fetch* manual.
-
-| Hora | 🎨 Frontend | ⚙️ Backend | 🧠 Gemma (este agente) |
-|------|-------------|------------|------------------------|
-| 0:15–1:00 | — | — | ✅ **Prompt de clasificación** diseñado (`gemma/prompt.py`) ✅ Tests unitarios del parser (`tests/test_parser.py`, 15 tests) ✅ Tests de pipeline E2E con mock (`tests/test_pipeline.py`, 5 tests) ✅ Script manual `test_prompt.py` validado con 6 escenarios simulados |
-| 1:00–1:45 | — | — | ⏳ Afinar prompt con feedback de Gemma real (pendiente del tunnel) |
-| 1:45 | 🔗 Checkpoint integración #1 | 🔗 Checkpoint integración #1 | 🔗 Checkpoint integración #1 |
-
-**Entregables de hoy (Agent 3):**
-- `gemma/prompt.py` — prompt compacto (<1400 chars / ~350 tokens, deja margen en el límite de 4096)
-- `gemma/parser.py` — parser robusto: maneja markdown fences, JSON con comas finales, texto circundante, valida contra el contrato
-- `gemma/client.py` — wrapper OpenAI SDK con env vars (`GEMMA_BASE_URL`, `GEMMA_API_KEY`)
-- `gemma/classifier.py` — orquestador `GemmaClassifier.classify(audio_base64) → dict` + función `gemma.classify()` de conveniencia
-- `tests/` — 20 tests unitarios, todos verdes
-
-**Próximos pasos:** ajustar el prompt con outputs reales de Gemma una vez el tunnel esté disponible; validar con audios grabados del micrófono.
-
----
-
-## Notas para el pitch
-
-- El argumento más fuerte que tienen: **no es solo "otro wearable que vibra"**, es un sistema que **interpreta contexto y es personalizable**, corriendo local por privacidad.
-- Dejen claro desde el inicio que **no es braille** — el braille es para personas ciegas, esto es un código háptico propio pensado para personas sordas.
-- Si el mic falla en vivo, tengan un clip de audio de respaldo pre-grabado para no perder la demo.
+- **Onboarding que enseña el código.** Gemma genera un tutorial conversacional
+  con repetición espaciada: un vocabulario nuevo no sirve si no se aprende.
+- **Perfil de sonidos personales.** La persona graba "este es mi timbre" y el
+  modelo usa esos ejemplos como referencia in-context, sin entrenar nada.
+- **Tono de conversación.** Detectar cuándo una charla cercana se vuelve tensa,
+  que es contexto social, no solo seguridad.
