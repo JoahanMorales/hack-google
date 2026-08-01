@@ -13,20 +13,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function iniciarHero() {
   const salida = document.getElementById('ascii');
-  const nota = document.getElementById('nota-ascii');
   if (!salida) return;
 
   const hero = new HeroASCII(salida, CONFIG.ascii);
-  const modo = await hero.iniciar();
+  await hero.iniciar();
 
-  // Decirle al equipo, en la propia página, cómo poner su video. Se quita
-  // solo en cuanto el archivo exista.
-  if (nota) {
-    nota.textContent =
-      modo === 'video'
-        ? ''
-        : `Hero generativo · dejen su video en ${CONFIG.ascii.fuenteVideo} y se renderiza en ASCII automáticamente`;
-  }
 
   // No gastar CPU renderizando algo que nadie está viendo: en una Jetson
   // sirviendo el modelo, cada ciclo cuenta.
