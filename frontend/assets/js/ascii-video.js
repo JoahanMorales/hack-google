@@ -22,26 +22,29 @@
 const RAMPA = ' .·:-=+*#%@';
 
 /**
- * Color por nivel de intensidad, usando la paleta de señal de la app: azul
- * ambiental en lo tenue, subiendo por verde y ámbar hasta el rojo de alarma.
- * No es decoración — es la misma escala de energía que usa el producto, así
- * que el hero ya está hablando el idioma de la interfaz.
+ * Color por nivel de intensidad: índigo profundo en lo tenue, subiendo por
+ * azul aciano y lavanda hasta un lila casi blanco en los picos.
+ *
+ * Deliberadamente NO usa las señales de categoría (rojo alarma, ámbar, verde).
+ * Esas comunican urgencia dentro de la app y no deben aparecer como decorado
+ * en un fondo, o pierden fuerza justo donde importa. Los tokens viven en
+ * tokens.css, así que la paleta se retoca ahí sin abrir este archivo.
  *
  * Un color por posición de la rampa, precalculado: buscarlo en cada pixel de
  * cada frame sería trabajo tirado.
  */
 const COLORES_RAMPA = [
-  'transparent',        // el espacio no se pinta
-  'var(--sig-ambiental)',
-  'var(--sig-ambiental)',
-  'var(--sig-ambiental)',
-  'var(--sig-social)',
-  'var(--sig-social)',
-  'var(--sig-atencion)',
-  'var(--sig-atencion)',
-  'var(--sig-alarma)',
-  'var(--sig-alarma)',
-  'var(--bone)',        // el pico, en blanco hueso
+  'transparent',      // el espacio no se pinta
+  'var(--ascii-1)',
+  'var(--ascii-2)',
+  'var(--ascii-3)',
+  'var(--ascii-4)',
+  'var(--ascii-5)',
+  'var(--ascii-6)',
+  'var(--ascii-7)',
+  'var(--ascii-8)',
+  'var(--ascii-9)',
+  'var(--ascii-10)',
 ];
 
 class HeroASCII {
@@ -193,7 +196,10 @@ class HeroASCII {
           const d = Math.sqrt(dx * dx + dy * dy);
           v += Math.sin(d * s.f - this.t * 2) / (1 + d * 0.06);
         }
-        const n = Math.max(0, Math.min(1, (v + 1) / 2));
+        // El 1.7 es contraste: sin él la suma de las dos ondas se agolpa
+        // cerca de 0.5 y solo se usa el centro de la rampa, dejando fuera los
+        // tonos claros. Con esto la escala completa entra en juego.
+        const n = Math.max(0, Math.min(1, (v * 1.7 + 1) / 2));
         niveles[y * w + x] = Math.min(RAMPA.length - 1, (n * RAMPA.length) | 0);
       }
     }

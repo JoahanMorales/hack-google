@@ -26,11 +26,29 @@
   --line: rgba(236, 231, 220, 0.11);
   --line-fuerte: rgba(236, 231, 220, 0.22);
 
-  /* Señales por categoría — el mismo orden que el contrato del backend. */
+  /* Señales por categoría — el mismo orden que el contrato del backend.
+     Estos NO son decorativos: comunican qué tipo de sonido se detectó, así que
+     no se tocan por gusto. El rojo tiene que leerse como alarma. */
   --sig-alarma: #ff4d3d;
   --sig-atencion: #ffae2b;
   --sig-social: #4fd98a;
   --sig-ambiental: #6c8cc7;
+
+  /* Rampa del hero en ASCII: de índigo profundo a lila casi blanco, pasando
+     por azul aciano y lavanda. Es una escala de intensidad, no un código de
+     significado, así que aquí sí manda la estética.
+     Va aparte de las señales a propósito: si algún día alguien retoca el hero,
+     que no arrastre los colores que comunican urgencia. */
+  --ascii-1: #4a5a9e;
+  --ascii-2: #5a6cb5;
+  --ascii-3: #6d80cc;
+  --ascii-4: #8091dd;
+  --ascii-5: #93a0e8;
+  --ascii-6: #a5a6ee;
+  --ascii-7: #b3a6f0;
+  --ascii-8: #c2adf4;
+  --ascii-9: #d3bcf8;
+  --ascii-10: #eadcfd;
 
   /* Tipografía. Cero fuentes externas: el wifi del venue no es de fiar y una
      fuente que no carga arruina la demo. La personalidad la carga el mono. */
