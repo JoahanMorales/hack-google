@@ -281,6 +281,52 @@
   color: var(--sig-alarma);
 }
 
+/* ── Canales de salida (plan B del escenario) ────────────────────────────── */
+
+.canales {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.canal-boton {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--bone-45);
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  padding: var(--s-2) var(--s-4);
+  cursor: pointer;
+  font-family: var(--mono);
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.canal-boton:hover {
+  color: var(--bone);
+  border-color: var(--bone-45);
+}
+
+.canal-boton[aria-pressed="true"] {
+  color: var(--ink-900);
+  background: var(--bone);
+  border-color: var(--bone);
+}
+
+.canales__nota {
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  margin: var(--s-2) 0 0;
+  max-width: 40ch;
+  text-align: center;
+  min-height: 1.2em;
+  letter-spacing: 0.04em;
+}
+
+.canales__nota[data-nivel="no"] {
+  color: var(--sig-atencion);
+}
+
 /* ── Nombre propio ───────────────────────────────────────────────────────── */
 
 .nombre-propio {

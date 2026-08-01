@@ -125,6 +125,37 @@ button {
   border-radius: 2px;
 }
 
+/* Destello a pantalla completa con el ritmo del patrón. Plan B cuando el
+   dispositivo no vibra: se ve desde el fondo de un salón y hasta proyectado.
+   Va en tokens porque lo usan la landing y la app. */
+.destello {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    color-mix(in srgb, var(--destello-color, var(--bone)) 42%, transparent) 0%,
+    color-mix(in srgb, var(--destello-color, var(--bone)) 10%, transparent) 55%,
+    transparent 78%
+  );
+  transition: opacity 60ms linear;
+}
+
+.destello.activo {
+  opacity: 1;
+}
+
+/* Un destello a pantalla completa puede ser un disparador de fotosensibilidad.
+   Con reduced-motion se reduce a un borde tenue en vez de inundar la pantalla. */
+@media (prefers-reduced-motion: reduce) {
+  .destello {
+    background: none;
+    box-shadow: inset 0 0 0 6px var(--destello-color, var(--bone));
+  }
+}
+
 .solo-lectores {
   position: absolute;
   width: 1px;

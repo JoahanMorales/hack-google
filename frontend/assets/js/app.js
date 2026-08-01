@@ -14,6 +14,7 @@ const estado = {
 let cliente;
 let partituraEvento;
 let detectorNombre = null;
+let presentacion;
 let temporizadoresOrbe = [];
 
 // ── Elementos ────────────────────────────────────────────────────────────────
@@ -26,9 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     'boton-escuchar-texto', 'control-nota', 'historial-lista', 'limpiar',
     'estado-fuente', 'estado-texto', 'anuncio', 'leyenda',
     'nombre-propio', 'input-nombre', 'nombre-estado',
+    'destello', 'probar-vibracion', 'toggle-sonido', 'diagnostico',
   ].forEach((id) => {
     el[id] = document.getElementById(id);
   });
+
+  presentacion = new ModoPresentacion(el.destello);
+  prepararCanales();
 
   construirLeyenda();
   prepararDeteccionNombre();
@@ -45,12 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   el['boton-escuchar'].addEventListener('click', alternarEscucha);
   el['limpiar'].addEventListener('click', limpiarHistorial);
-
-  if (!soportaVibracion()) {
-    nota(
-      'Este dispositivo no vibra (iOS no expone la API). Vas a ver el patrón en pantalla.'
-    );
-  }
 
   // app.html?demo=1 arranca solo, con eventos simulados y sin pedir micrófono.
   // Sirve para dos cosas: probar el flujo completo de forma automatizada, y
@@ -75,6 +74,38 @@ function construirLeyenda() {
     nombre.textContent = cat.nombre;
     li.appendChild(nombre);
     el.leyenda.appendChild(li);
+  });
+}
+
+// ── Canales de salida ────────────────────────────────────────────────────────
+
+function prepararCanales() {
+  const dx = diagnosticoVibracion();
+  el.diagnostico.textContent = dx.texto;
+  el.diagnostico.dataset.nivel = dx.nivel;
+
+  // Probar la vibración con un toque directo es la única forma de saber si el
+  // teléfono realmente se mueve: la API devuelve true aunque no pase nada.
+  el['probar-vibracion'].addEventListener('click', () => {
+    const patron = CATEGORIAS.alarma.patron;
+    const r = intentarVibrar(patron);
+    presentacion.emitir(patron, CATEGORIAS.alarma.color);
+
+    el.diagnostico.textContent = r.intentado
+      ? '¿Lo sentiste? Si no, el destello y el sonido son tu respaldo en escenario.'
+      : 'Este dispositivo no puede vibrar. Usa el destello y el sonido.';
+    el.diagnostico.dataset.nivel = r.intentado ? 'quizas' : 'no';
+  });
+
+  el['toggle-sonido'].addEventListener('click', () => {
+    presentacion.conSonido = !presentacion.conSonido;
+    el['toggle-sonido'].textContent = `Sonido: ${presentacion.conSonido ? 'on' : 'off'}`;
+    el['toggle-sonido'].setAttribute('aria-pressed', String(presentacion.conSonido));
+    if (presentacion.conSonido) {
+      // Se emite algo de inmediato: así el AudioContext se desbloquea dentro
+      // del gesto del usuario, que es cuando el navegador lo permite.
+      presentacion.emitir(CATEGORIAS.social.patron, CATEGORIAS.social.color);
+    }
   });
 }
 
@@ -205,7 +236,8 @@ function detenerEscucha() {
   el['boton-escuchar'].dataset.activo = 'false';
   el['boton-escuchar-texto'].textContent = 'Empezar a escuchar';
   el.orbe.dataset.estado = 'dormido';
-  vibrar(0); // cortar cualquier vibración en curso
+  intentarVibrar(0); // cortar cualquier vibración en curso
+  presentacion.detener();
   pintarEstadoNombre();
 }
 
@@ -415,7 +447,10 @@ function mostrarEvento(resultado) {
   partituraEvento.dibujar(patron, cat.color);
   partituraEvento.reproducir();
 
-  vibrar(patron);
+  // Tres canales con el mismo array: vibración, destello y (si está activo)
+  // zumbido. Si el dispositivo no vibra, el patrón se sigue percibiendo.
+  intentarVibrar(patron);
+  presentacion.emitir(patron, cat.color);
   pulsarOrbe(patron);
 
   agregarAlHistorial(resultado, cat);

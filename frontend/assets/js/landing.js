@@ -2,7 +2,10 @@
  * Landing: arranca el hero en ASCII y arma la lista de patrones.
  */
 
+let presentacion;
+
 document.addEventListener('DOMContentLoaded', () => {
+  presentacion = new ModoPresentacion(document.getElementById('destello'));
   iniciarHero();
   construirVocabulario();
   avisarSoporteVibracion();
@@ -71,9 +74,11 @@ function construirVocabulario() {
 
     boton.addEventListener('click', () => {
       partitura.reproducir();
-      // En la landing sí vibramos: es una acción que la persona pidió
-      // explícitamente al tocar el botón.
-      vibrar(cat.patron);
+      // En la landing sí emitimos: es una acción que la persona pidió
+      // explícitamente al tocar. Van los tres canales, para que el patrón se
+      // perciba aunque el dispositivo no vibre.
+      intentarVibrar(cat.patron);
+      presentacion.emitir(cat.patron, cat.color);
     });
 
     li.appendChild(boton);
@@ -84,7 +89,7 @@ function construirVocabulario() {
 function avisarSoporteVibracion() {
   const aviso = document.getElementById('aviso-vibracion');
   if (!aviso) return;
-  aviso.textContent = soportaVibracion()
-    ? 'Tu dispositivo sí vibra — tócalos para sentir la diferencia.'
-    : 'Este dispositivo no expone la API de vibración: vas a ver el patrón, pero no sentirlo. Ábrelo en un Android para la experiencia completa.';
+  // No se puede saber si el aparato realmente vibra: la API devuelve true en
+  // escritorio y no pasa nada. Así que no se promete, se describe.
+  aviso.textContent = `${diagnosticoVibracion().texto} La pantalla destella con el mismo ritmo en cualquier dispositivo.`;
 }

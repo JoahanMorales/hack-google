@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="assets/css/app.css" />
   </head>
   <body class="app-body" data-titulo-sufijo="escuchando">
+    <!-- Destello a pantalla completa, con el ritmo del patrón. Es el plan B
+         cuando el dispositivo no vibra: se ve desde el fondo del salón. -->
+    <div class="destello" id="destello" aria-hidden="true"></div>
+
     <header class="app-barra">
       <a class="app-barra__volver" href="index.html" aria-label="Volver a la portada">
         <span aria-hidden="true">←</span>
@@ -60,6 +64,17 @@
           </span>
         </button>
         <p class="control__nota mono" id="control-nota"></p>
+
+        <!-- Comprobar la vibración ANTES de subir al escenario, no durante. -->
+        <div class="canales">
+          <button class="canal-boton" id="probar-vibracion" type="button">
+            Probar vibración
+          </button>
+          <button class="canal-boton" id="toggle-sonido" type="button" aria-pressed="false">
+            Sonido: off
+          </button>
+        </div>
+        <p class="canales__nota mono" id="diagnostico"></p>
       </div>
 
       <!-- Tu nombre. Se reconoce en el navegador con la Web Speech API, en
@@ -111,6 +126,7 @@
     <script src="assets/js/patterns.js"></script>
     <script src="assets/js/haptic-score.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/presentacion.js"></script>
     <script src="assets/js/deteccion-nombre.js"></script>
     <script src="assets/js/app.js"></script>
   </body>
