@@ -235,6 +235,10 @@
       </div>
     </footer>
 
+    <!-- Generado en el build desde las variables de entorno del despliegue.
+         Si no existe (desarrollo local), no pasa nada: se usa la config por
+         defecto. Va ANTES de config.js, que es quien lo lee. -->
+    <script src="env.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/patterns.js"></script>
     <script src="assets/js/haptic-score.js"></script>

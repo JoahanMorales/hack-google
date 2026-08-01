@@ -21,6 +21,29 @@
 // De más oscuro a más claro. El espacio al inicio es intencional: es el negro.
 const RAMPA = ' .·:-=+*#%@';
 
+/**
+ * Color por nivel de intensidad, usando la paleta de señal de la app: azul
+ * ambiental en lo tenue, subiendo por verde y ámbar hasta el rojo de alarma.
+ * No es decoración — es la misma escala de energía que usa el producto, así
+ * que el hero ya está hablando el idioma de la interfaz.
+ *
+ * Un color por posición de la rampa, precalculado: buscarlo en cada pixel de
+ * cada frame sería trabajo tirado.
+ */
+const COLORES_RAMPA = [
+  'transparent',        // el espacio no se pinta
+  'var(--sig-ambiental)',
+  'var(--sig-ambiental)',
+  'var(--sig-ambiental)',
+  'var(--sig-social)',
+  'var(--sig-social)',
+  'var(--sig-atencion)',
+  'var(--sig-atencion)',
+  'var(--sig-alarma)',
+  'var(--sig-alarma)',
+  'var(--bone)',        // el pico, en blanco hueso
+];
+
 class HeroASCII {
   /**
    * @param {HTMLElement} salida  el <pre> donde se escribe
@@ -31,6 +54,7 @@ class HeroASCII {
     this.columnas = opciones.columnas ?? 150;
     this.fps = opciones.fps ?? 24;
     this.fuenteVideo = opciones.fuenteVideo ?? null;
+    this.color = opciones.color ?? true;
     this.corriendo = false;
     this.modo = null; // 'video' | 'generativo'
     this.t = 0;
@@ -100,6 +124,21 @@ class HeroASCII {
 
   _bucle() {
     if (!this.corriendo) return;
+
+    // Con reduced-motion se pinta un frame y se congela: el hero conserva su
+    // textura pero deja de moverse. Un fondo animado permanente es justo lo
+    // que esa preferencia pide evitar.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      try {
+        if (this.modo === 'video') this._frameVideo();
+        else this._frameGenerativo();
+      } catch {
+        /* si falla, el hero se queda vacío pero la página funciona igual */
+      }
+      this.corriendo = false;
+      return;
+    }
+
     try {
       if (this.modo === 'video') this._frameVideo();
       else this._frameGenerativo();
@@ -116,18 +155,15 @@ class HeroASCII {
     this.ctx.drawImage(this.video, 0, 0, w, h);
     const datos = this.ctx.getImageData(0, 0, w, h).data;
 
-    let salida = '';
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const i = (y * w + x) * 4;
-        // Luminancia perceptual (Rec. 601): el ojo pesa mucho más el verde.
-        const lum =
-          (0.299 * datos[i] + 0.587 * datos[i + 1] + 0.114 * datos[i + 2]) / 255;
-        salida += RAMPA[Math.min(RAMPA.length - 1, (lum * RAMPA.length) | 0)];
-      }
-      salida += '\n';
+    const niveles = new Uint8Array(w * h);
+    for (let p = 0; p < w * h; p++) {
+      const i = p * 4;
+      // Luminancia perceptual (Rec. 601): el ojo pesa mucho más el verde.
+      const lum =
+        (0.299 * datos[i] + 0.587 * datos[i + 1] + 0.114 * datos[i + 2]) / 255;
+      niveles[p] = Math.min(RAMPA.length - 1, (lum * RAMPA.length) | 0);
     }
-    this.salida.textContent = salida;
+    this._pintar(niveles, w, h);
   }
 
   /**
@@ -145,7 +181,7 @@ class HeroASCII {
       { x: w * 0.72, y: h * 0.42, f: 0.4 },
     ];
 
-    let salida = '';
+    const niveles = new Uint8Array(w * h);
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         let v = 0;
@@ -158,10 +194,59 @@ class HeroASCII {
           v += Math.sin(d * s.f - this.t * 2) / (1 + d * 0.06);
         }
         const n = Math.max(0, Math.min(1, (v + 1) / 2));
-        salida += RAMPA[Math.min(RAMPA.length - 1, (n * RAMPA.length) | 0)];
+        niveles[y * w + x] = Math.min(RAMPA.length - 1, (n * RAMPA.length) | 0);
       }
-      salida += '\n';
     }
-    this.salida.textContent = salida;
+    this._pintar(niveles, w, h);
+  }
+
+  /**
+   * Escribe el frame. En color agrupa los caracteres contiguos del mismo nivel
+   * en un solo <span>: un span por carácter serían más de 6000 nodos por frame
+   * y el hero se arrastraría en un teléfono. Con las ondas, los vecinos casi
+   * siempre comparten nivel, así que la agrupación reduce muchísimo el DOM.
+   */
+  _pintar(niveles, w, h) {
+    if (!this.color) {
+      let plano = '';
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) plano += RAMPA[niveles[y * w + x]];
+        plano += '\n';
+      }
+      this.salida.textContent = plano;
+      return;
+    }
+
+    // Se agrupa por COLOR, no por nivel de rampa: varios niveles comparten el
+    // mismo color (tres tonos caen en ambiental, dos en social...), así que
+    // agrupar por nivel partiría spans que se pintan idénticos. Este detalle
+    // baja el conteo de spans a menos de la mitad.
+    const partes = [];
+    for (let y = 0; y < h; y++) {
+      let colorActual = null;
+      let buffer = '';
+      for (let x = 0; x < w; x++) {
+        const nivel = niveles[y * w + x];
+        const color = COLORES_RAMPA[nivel];
+        if (color !== colorActual) {
+          if (buffer) partes.push(this._envolver(buffer, colorActual));
+          buffer = '';
+          colorActual = color;
+        }
+        buffer += RAMPA[nivel];
+      }
+      if (buffer) partes.push(this._envolver(buffer, colorActual));
+      partes.push('\n');
+    }
+    // Todo va dentro de UN solo hijo. El <pre> es un contenedor flex (para
+    // centrar el bloque), y sin este envoltorio cada span se volvería un ítem
+    // flex por separado y el ASCII colapsaría a una sola línea.
+    this.salida.innerHTML = `<span class="hero__ascii-lienzo">${partes.join('')}</span>`;
+  }
+
+  _envolver(texto, color) {
+    // 'transparent' es el espacio: no hace falta un span para no pintar nada.
+    if (!color || color === 'transparent') return texto;
+    return `<span style="color:${color}">${texto}</span>`;
   }
 }

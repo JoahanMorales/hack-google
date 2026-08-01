@@ -14,6 +14,22 @@
          cuando el dispositivo no vibra: se ve desde el fondo del salón. -->
     <div class="destello" id="destello" aria-hidden="true"></div>
 
+    <!-- Se muestra solo cuando no hay modelo alcanzable (despliegue estático
+         sin la variable de entorno del túnel). Lo llena app.js. -->
+    <aside class="vitrina" id="vitrina" hidden>
+      <p class="vitrina__titulo">Previsualización</p>
+      <p class="vitrina__texto">
+        Coralia corre contra <strong>Gemma 4 en un dispositivo local</strong>, no
+        en la nube. Este despliegue no tiene el modelo detrás, así que el
+        micrófono está apagado y lo que ves es un recorrido por las cuatro
+        categorías con eventos de ejemplo.
+        <span class="vitrina__extra">
+          Los patrones de vibración, el orbe y la partitura son los reales: eso
+          es todo del lado del navegador.
+        </span>
+      </p>
+    </aside>
+
     <header class="app-barra">
       <a class="app-barra__volver" href="index.html" aria-label="Volver a la portada">
         <span aria-hidden="true">←</span>
@@ -122,6 +138,10 @@
          necesita saber qué se detectó sin depender del color ni del orbe. -->
     <p class="solo-lectores" role="status" aria-live="polite" id="anuncio"></p>
 
+    <!-- Generado en el build desde las variables de entorno del despliegue.
+         Si no existe (desarrollo local), no pasa nada: se usa la config por
+         defecto. Va ANTES de config.js, que es quien lo lee. -->
+    <script src="env.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/patterns.js"></script>
     <script src="assets/js/haptic-score.js"></script>

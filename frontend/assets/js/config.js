@@ -60,13 +60,15 @@ const CONFIG = {
   api: {
     // Endpoint de clasificación del backend.
     //   · Ruta relativa ('/clasificar') si el backend sirve también estos
-    //     archivos estáticos — es lo que queremos para la demo final, porque
+    //     archivos estáticos — es lo que queremos para la demo real, porque
     //     así funciona igual detrás del túnel sin tocar nada.
-    //   · URL absoluta ('http://localhost:8100/clasificar') mientras
-    //     desarrollan por separado. En ese caso el backend necesita CORS.
+    //   · URL absoluta si el backend corre aparte. Necesita CORS de su lado.
+    //
+    // En un despliegue estático (Vercel, GitHub Pages) esto se sobreescribe
+    // con la variable de entorno: ver window.CORALIA_CONFIG abajo. Si no está
+    // configurada, la app entra en modo vitrina y lo dice en pantalla.
     endpoint: '/clasificar',
-    // En true la UI corre con datos simulados, sin backend. Se apaga solo
-    // en cuanto el endpoint real responde (ver api.js).
+    // En true la UI corre con datos simulados cuando no hay backend.
     usarMock: true,
     // Si el backend tarda más que esto, se cancela y se avisa en pantalla.
     timeoutMs: 20000,
@@ -81,8 +83,38 @@ const CONFIG = {
     // Ancho en caracteres. Más alto = más detalle y más costo de CPU.
     columnas: 150,
     fps: 24,
+    // Colorea los caracteres según su intensidad, con la paleta de señal de
+    // la app. En false sale monocromo y cuesta menos CPU.
+    color: true,
   },
 };
+
+/**
+ * Sobreescritura por entorno.
+ *
+ * Coralia corre contra un modelo LOCAL: Gemma 4 en una Jetson en el mismo
+ * cuarto. Un despliegue estático (Vercel, GitHub Pages) no tiene forma de
+ * alcanzarlo salvo que se le dé la URL del túnel por variable de entorno.
+ *
+ * En Vercel: definir CORALIA_ENDPOINT en el proyecto y generar env.js en el
+ * build (ver vercel.json). Si la variable no está, env.js queda vacío, no hay
+ * endpoint, y la app entra en modo vitrina explicándolo — que es justo lo que
+ * queremos: nunca fingir que hay un modelo detrás cuando no lo hay.
+ */
+if (typeof window !== 'undefined' && window.CORALIA_CONFIG) {
+  const env = window.CORALIA_CONFIG;
+  // Se compara contra undefined, no por truthiness: un endpoint vacío es una
+  // señal deliberada del build ("no hay modelo detrás"), no un valor faltante.
+  // Con truthiness se ignoraría y la app intentaría /clasificar contra un
+  // hosting estático, tardando en fallar en vez de decirlo de entrada.
+  if (env.endpoint !== undefined) CONFIG.api.endpoint = env.endpoint;
+  if (env.nombre) CONFIG.nombre = env.nombre;
+}
+
+/** true si no hay a dónde mandar el audio: despliegue sin modelo detrás. */
+function sinBackendConfigurado() {
+  return !CONFIG.api.endpoint;
+}
 
 /**
  * Recorre el DOM y rellena todo lo marcado con data-cfg.

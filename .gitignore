@@ -19,3 +19,6 @@ samples/
 # OS
 .DS_Store
 Thumbs.db
+
+# Generado en el build de Vercel
+frontend/env.js

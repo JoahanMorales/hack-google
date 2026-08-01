@@ -5,6 +5,8 @@
 
 const estado = {
   escuchando: false,
+  // true cuando no hay modelo alcanzable: se muestra la previsualización.
+  vitrina: false,
   grabador: null,
   pista: null,
   cancelar: false,
@@ -27,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'boton-escuchar-texto', 'control-nota', 'historial-lista', 'limpiar',
     'estado-fuente', 'estado-texto', 'anuncio', 'leyenda',
     'nombre-propio', 'input-nombre', 'nombre-estado',
-    'destello', 'probar-vibracion', 'toggle-sonido', 'diagnostico',
+    'destello', 'probar-vibracion', 'toggle-sonido', 'diagnostico', 'vitrina',
   ].forEach((id) => {
     el[id] = document.getElementById(id);
   });
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   cliente = new ClienteClasificacion(CONFIG.api);
   cliente.alCambiarModo = pintarModo;
   pintarModo(cliente.modo);
-  cliente.sondear();
+  resolverModoDespliegue();
 
   el['boton-escuchar'].addEventListener('click', alternarEscucha);
   el['limpiar'].addEventListener('click', limpiarHistorial);
@@ -75,6 +77,43 @@ function construirLeyenda() {
     li.appendChild(nombre);
     el.leyenda.appendChild(li);
   });
+}
+
+// ── Modo de despliegue ───────────────────────────────────────────────────────
+
+/**
+ * Decide si hay un modelo detrás o no.
+ *
+ * Coralia clasifica con Gemma 4 corriendo LOCAL. Un despliegue estático
+ * (Vercel, GitHub Pages) no lo alcanza salvo que se le pase la URL del túnel
+ * por variable de entorno. Cuando no hay modelo, la app no finge: lo dice y
+ * muestra un recorrido por las cuatro categorías.
+ */
+async function resolverModoDespliegue() {
+  // Sin endpoint configurado no hay nada que sondear.
+  if (sinBackendConfigurado()) {
+    entrarEnVitrina();
+    return;
+  }
+
+  const vivo = await cliente.sondear();
+  if (!vivo) entrarEnVitrina();
+}
+
+function entrarEnVitrina() {
+  estado.vitrina = true;
+  // Sin micrófono: mandar audio a ningún lado solo gastaría batería y pediría
+  // un permiso que no hace falta.
+  estado.modoDemo = true;
+
+  el.vitrina.hidden = false;
+  el['boton-escuchar-texto'].textContent = 'Ver la previsualización';
+
+  // El campo de nombre sí funciona sin backend —es del navegador— pero en la
+  // vitrina no hay micrófono, así que no tendría con qué escuchar.
+  if (el['nombre-propio']) el['nombre-propio'].hidden = true;
+
+  nota('');
 }
 
 // ── Canales de salida ────────────────────────────────────────────────────────
@@ -198,10 +237,12 @@ async function iniciarEscucha() {
   estado.escuchando = true;
   estado.cancelar = false;
   el['boton-escuchar'].dataset.activo = 'true';
-  el['boton-escuchar-texto'].textContent = 'Dejar de escuchar';
+  el['boton-escuchar-texto'].textContent = estado.vitrina
+    ? 'Detener la previsualización'
+    : 'Dejar de escuchar';
   el.orbe.dataset.estado = 'escuchando';
 
-  if (!micOk) {
+  if (!micOk && !estado.vitrina) {
     nota(
       estado.modoDemo
         ? 'Modo demo: eventos simulados, sin micrófono.'
@@ -234,7 +275,9 @@ function detenerEscucha() {
   if (detectorNombre) detectorNombre.detener();
 
   el['boton-escuchar'].dataset.activo = 'false';
-  el['boton-escuchar-texto'].textContent = 'Empezar a escuchar';
+  el['boton-escuchar-texto'].textContent = estado.vitrina
+    ? 'Ver la previsualización'
+    : 'Empezar a escuchar';
   el.orbe.dataset.estado = 'dormido';
   intentarVibrar(0); // cortar cualquier vibración en curso
   presentacion.detener();

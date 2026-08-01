@@ -24,6 +24,51 @@
   transition: background 500ms ease;
 }
 
+/* ── Aviso de vitrina ────────────────────────────────────────────────────── */
+
+.vitrina {
+  border-bottom: 1px solid color-mix(in srgb, var(--sig-atencion) 30%, transparent);
+  background: color-mix(in srgb, var(--sig-atencion) 8%, var(--ink-700));
+  padding: var(--s-4) var(--s-6);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-4);
+}
+
+.vitrina[hidden] {
+  display: none;
+}
+
+.vitrina__titulo {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sig-atencion);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.vitrina__texto {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--bone-70);
+  max-width: 78ch;
+}
+
+.vitrina__texto strong {
+  color: var(--bone);
+  font-weight: 600;
+}
+
+/* Matiz secundario: importa, pero no debe competir con la primera frase. */
+.vitrina__extra {
+  display: block;
+  margin-top: var(--s-2);
+  color: var(--bone-45);
+}
+
 /* ── Barra ───────────────────────────────────────────────────────────────── */
 
 .app-barra {

@@ -117,14 +117,23 @@
   font-size: clamp(3px, calc(100vw / 92), 12px);
   line-height: 1;
   letter-spacing: 0;
+  /* El color lo pone cada span según la intensidad (ver ascii-video.js). Este
+     es solo el respaldo si se apaga CONFIG.ascii.color. */
   color: var(--sig-ambiental);
-  opacity: 0.5;
+  opacity: 0.78;
   white-space: pre;
   overflow: hidden;
   user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Único hijo del <pre>: mantiene el bloque de texto entero como un solo ítem
+   flex, para que los spans de color no rompan el layout de líneas. */
+.hero__ascii-lienzo {
+  display: block;
+  white-space: pre;
 }
 
 /* Degradado que hunde el ASCII detrás del texto sin taparlo del todo. */
