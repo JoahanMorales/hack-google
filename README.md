@@ -16,7 +16,7 @@ Y sirve igual si oyes perfectamente: con audífonos con cancelación de ruido,
 durmiendo, en obra con protección auditiva, o con el teléfono en silencio.
 Es una app web — se abre y funciona, sin instalar nada ni comprar hardware.
 
-**Demo:** [https://api.axolutions.dev](https://coralia-six.vercel.app) · **Pruebas y mediciones:** [PRUEBAS.md](PRUEBAS.md)
+**Demo:** [Coralia](https://coralia-six.vercel.app) · **Pruebas y mediciones:** [PRUEBAS.md](PRUEBAS.md)
 
 ---
 
