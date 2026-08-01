@@ -7,8 +7,14 @@ personas sordas sepan qué está pasando a su alrededor en tiempo real. **Gemma 
 escucha e interpreta el audio, y cada tipo de sonido dispara un patrón de
 vibración diferente.
 
-También cubre otros casos: avisarle a un padre o una madre cuando el bebé llora,
-o detectar cuando alguien te llama por tu nombre entre el ruido.
+Con el mismo vocabulario de cuatro patrones ya cubre la **alerta sísmica** —de
+las últimas cosas de las que se entera una persona sorda, y donde el margen es
+de segundos—, el **llanto de un bebé** en otro cuarto, el **timbre** de la
+puerta, y **que alguien te esté llamando por tu nombre**.
+
+Y sirve igual si oyes perfectamente: con audífonos con cancelación de ruido,
+durmiendo, en obra con protección auditiva, o con el teléfono en silencio.
+Es una app web — se abre y funciona, sin instalar nada ni comprar hardware.
 
 **Demo:** https://api.axolutions.dev · **Pruebas y mediciones:** [PRUEBAS.md](PRUEBAS.md)
 
@@ -28,6 +34,13 @@ lo que sirve.
 El resultado es que la información sonora de seguridad y convivencia —una
 alarma, alguien llamándote, el llanto de un bebé en el cuarto de al lado— se
 pierde.
+
+El caso extremo en México es la **alerta sísmica**: da entre segundos y poco más
+de un minuto de margen, y se distribuye por altavoces, radio y televisión. Todos
+canales sonoros. Una persona sorda suele enterarse cuando ve correr a los demás,
+y para entonces ya se consumió la ventaja que el sistema existe para dar.
+
+Ver [IMPACTO.md](IMPACTO.md) para el desarrollo completo.
 
 ## La propuesta
 
