@@ -34,17 +34,17 @@ const RAMPA = ' .·:-=+*#%@';
  * cada frame sería trabajo tirado.
  */
 const COLORES_RAMPA = [
-  'transparent',      // el espacio no se pinta
-  'var(--ascii-1)',
-  'var(--ascii-2)',
-  'var(--ascii-3)',
-  'var(--ascii-4)',
-  'var(--ascii-5)',
-  'var(--ascii-6)',
-  'var(--ascii-7)',
-  'var(--ascii-8)',
-  'var(--ascii-9)',
-  'var(--ascii-10)',
+  '',                 // el espacio no se pinta
+  '#2f4bb0',          // azul profundo
+  '#2f4bb0',
+  '#4a86e8',          // azul brillante
+  '#4a86e8',
+  '#7b7ef0',          // azul-violeta
+  '#9d6ef2',          // violeta
+  '#c06cf0',          // orquídea
+  '#e08ae8',          // rosa lila
+  '#f3bdf5',          // lila pálido
+  '#fbe8ff',          // casi blanco
 ];
 
 class HeroASCII {
@@ -57,7 +57,6 @@ class HeroASCII {
     this.columnas = opciones.columnas ?? 150;
     this.fps = opciones.fps ?? 24;
     this.fuenteVideo = opciones.fuenteVideo ?? null;
-    this.color = opciones.color ?? true;
     this.corriendo = false;
     this.modo = null; // 'video' | 'generativo'
     this.t = 0;
@@ -66,8 +65,29 @@ class HeroASCII {
     // comprimir las filas o la imagen sale estirada verticalmente.
     this.relacionCaracter = 0.5;
 
+    // Canvas interno, chiquito: solo para leer los pixeles del video.
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+
+    // Canvas visible donde se dibuja el ASCII.
+    this.lienzo = salida;
+    this.ctx2d = salida.getContext ? salida.getContext('2d') : null;
+    this.familiaFuente =
+      'ui-monospace, SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace';
+    this._ajustarLienzo();
+    window.addEventListener('resize', () => this._ajustarLienzo());
+  }
+
+  /** Ajusta el canvas a su tamaño en pantalla, respetando la densidad. */
+  _ajustarLienzo() {
+    if (!this.lienzo || !this.lienzo.getBoundingClientRect) return;
+    const r = this.lienzo.getBoundingClientRect();
+    // Se limita a 2x: en pantallas 3x el costo de pintado se dispara sin que
+    // se note la diferencia en un fondo de texto tenue.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.lienzo.width = Math.max(1, Math.round(r.width * dpr));
+    this.lienzo.height = Math.max(1, Math.round(r.height * dpr));
+    this._tamFuente = null; // forzar recalibrado del tamaño de fuente
   }
 
   async iniciar() {
@@ -207,52 +227,58 @@ class HeroASCII {
   }
 
   /**
-   * Escribe el frame. En color agrupa los caracteres contiguos del mismo nivel
-   * en un solo <span>: un span por carácter serían más de 6000 nodos por frame
-   * y el hero se arrastraría en un teléfono. Con las ondas, los vecinos casi
-   * siempre comparten nivel, así que la agrupación reduce muchísimo el DOM.
+   * Dibuja el frame en el canvas.
+   *
+   * Truco de rendimiento: en vez de un fillText por carácter (~6000 por frame,
+   * inviable), se hace UNO por fila y color. Para cada color se arma la fila
+   * completa con espacios donde van los demás colores; como la fuente es
+   * monoespaciada, cada carácter cae exactamente en su columna. Eso baja de
+   * miles de llamadas a unas pocas centenas.
    */
   _pintar(niveles, w, h) {
-    if (!this.color) {
-      let plano = '';
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) plano += RAMPA[niveles[y * w + x]];
-        plano += '\n';
-      }
-      this.salida.textContent = plano;
-      return;
+    const ctx = this.ctx2d;
+    if (!ctx) return;
+
+    const { width: W, height: H } = this.lienzo;
+    ctx.clearRect(0, 0, W, H);
+
+    const anchoCelda = W / w;
+    const altoCelda = H / h;
+
+    // El tamaño de fuente se calibra midiendo el avance real de la fuente
+    // monoespaciada, en vez de asumir el clásico 0.6em que varía entre
+    // sistemas y descuadraría las columnas.
+    if (!this._tamFuente || this._anchoCeldaPrevio !== anchoCelda) {
+      ctx.font = `100px ${this.familiaFuente}`;
+      const avance = ctx.measureText('M').width / 100;
+      this._tamFuente = anchoCelda / avance;
+      this._anchoCeldaPrevio = anchoCelda;
     }
 
-    // Se agrupa por COLOR, no por nivel de rampa: varios niveles comparten el
-    // mismo color (tres tonos caen en ambiental, dos en social...), así que
-    // agrupar por nivel partiría spans que se pintan idénticos. Este detalle
-    // baja el conteo de spans a menos de la mitad.
-    const partes = [];
+    ctx.font = `${this._tamFuente}px ${this.familiaFuente}`;
+    ctx.textBaseline = 'top';
+
+    const filaPorColor = new Map();
     for (let y = 0; y < h; y++) {
-      let colorActual = null;
-      let buffer = '';
+      filaPorColor.clear();
+
       for (let x = 0; x < w; x++) {
         const nivel = niveles[y * w + x];
         const color = COLORES_RAMPA[nivel];
-        if (color !== colorActual) {
-          if (buffer) partes.push(this._envolver(buffer, colorActual));
-          buffer = '';
-          colorActual = color;
+        if (!color) continue;
+        let fila = filaPorColor.get(color);
+        if (!fila) {
+          fila = new Array(w).fill(' ');
+          filaPorColor.set(color, fila);
         }
-        buffer += RAMPA[nivel];
+        fila[x] = RAMPA[nivel];
       }
-      if (buffer) partes.push(this._envolver(buffer, colorActual));
-      partes.push('\n');
-    }
-    // Todo va dentro de UN solo hijo. El <pre> es un contenedor flex (para
-    // centrar el bloque), y sin este envoltorio cada span se volvería un ítem
-    // flex por separado y el ASCII colapsaría a una sola línea.
-    this.salida.innerHTML = `<span class="hero__ascii-lienzo">${partes.join('')}</span>`;
-  }
 
-  _envolver(texto, color) {
-    // 'transparent' es el espacio: no hace falta un span para no pintar nada.
-    if (!color || color === 'transparent') return texto;
-    return `<span style="color:${color}">${texto}</span>`;
+      const py = y * altoCelda;
+      for (const [color, fila] of filaPorColor) {
+        ctx.fillStyle = color;
+        ctx.fillText(fila.join(''), 0, py);
+      }
+    }
   }
 }

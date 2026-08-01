@@ -105,35 +105,18 @@
   border-bottom: 1px solid var(--line);
 }
 
-/* El ASCII es el fondo vivo del hero. El tamaño de fuente se calcula para que
-   las columnas de config.js quepan exactamente en el ancho de la ventana:
-   en monoespaciada cada carácter mide ~0.6em, así que 100vw / (cols * 0.6). */
+/* El ASCII es el fondo vivo del hero. Se dibuja en un <canvas>, no como texto
+   en el DOM: con ~1500 spans por frame a 24 fps el navegador se ahogaba
+   parseando HTML. En canvas el costo es de pintado puro y no toca el layout. */
 .hero__ascii {
   position: absolute;
   inset: 0;
-  margin: 0;
-  padding: 0;
-  font-family: var(--mono);
-  font-size: clamp(3px, calc(100vw / 92), 12px);
-  line-height: 1;
-  letter-spacing: 0;
-  /* El color lo pone cada span según la intensidad (ver ascii-video.js). Este
-     es solo el respaldo si se apaga CONFIG.ascii.color. */
-  color: var(--sig-ambiental);
-  opacity: 0.78;
-  white-space: pre;
-  overflow: hidden;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Único hijo del <pre>: mantiene el bloque de texto entero como un solo ítem
-   flex, para que los spans de color no rompan el layout de líneas. */
-.hero__ascii-lienzo {
+  width: 100%;
+  height: 100%;
   display: block;
-  white-space: pre;
+  opacity: 0.9;
+  user-select: none;
+  pointer-events: none;
 }
 
 /* Degradado que hunde el ASCII detrás del texto sin taparlo del todo. */

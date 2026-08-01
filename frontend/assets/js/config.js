@@ -80,12 +80,11 @@ const CONFIG = {
     // Si el archivo no existe, corre una animación generativa de respaldo
     // para que el hero nunca se vea vacío. Ver ascii-video.js.
     fuenteVideo: 'assets/media/hero.mp4',
-    // Ancho en caracteres. Más alto = más detalle y más costo de CPU.
-    columnas: 150,
-    fps: 24,
-    // Colorea los caracteres según su intensidad, con la paleta de señal de
-    // la app. En false sale monocromo y cuesta menos CPU.
-    color: true,
+    // Ancho en caracteres. Más alto = más detalle y más costo de pintado.
+    columnas: 110,
+    // Es un fondo ambiental de onda lenta: a 15 fps se ve igual de fluido que
+    // a 24 y cuesta casi la mitad.
+    fps: 15,
   },
 };
 
