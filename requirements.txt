@@ -1,0 +1,10 @@
+flask==3.0.3
+flask-cors==4.0.1
+openai==1.57.4
+python-dotenv==1.0.1
+pytest==8.3.3
+
+# Gemma 4 no tiene encoder de audio: clasificamos convirtiendo el clip a
+# espectrograma y mandándolo como imagen. Ver handoff/HALLAZGO-AUDIO.md
+numpy==1.26.4
+pillow==10.4.0

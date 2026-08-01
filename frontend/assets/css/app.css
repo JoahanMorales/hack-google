@@ -1,0 +1,420 @@
+@import url("partitura.css");
+
+/* ───────────────────────────────────────────────────────────────────────────
+   APP
+   Una sola pantalla, sin scroll en móvil hasta el historial. Todo el color de
+   la interfaz viene de --activo, que se cambia desde JS según la categoría
+   detectada: así el cambio de estado se lee de reojo, desde lejos.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.app-body {
+  --activo: var(--bone-45);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Tinte muy tenue del color de la categoría en el fondo. Es lo que hace que
+     la pantalla completa "cambie de humor" al detectar algo. */
+  background:
+    radial-gradient(
+      120% 90% at 50% 18%,
+      color-mix(in srgb, var(--activo) 9%, transparent) 0%,
+      transparent 62%
+    ),
+    var(--ink-800);
+  transition: background 500ms ease;
+}
+
+/* ── Barra ───────────────────────────────────────────────────────────────── */
+
+.app-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+  border-bottom: 1px solid var(--line);
+}
+
+.app-barra__volver {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  text-decoration: none;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--bone-70);
+  transition: color 140ms ease;
+}
+.app-barra__volver:hover {
+  color: var(--bone);
+}
+
+.app-barra__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone-45);
+}
+
+.punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bone-25);
+}
+
+.app-barra__estado[data-modo="real"] .punto {
+  background: var(--sig-social);
+  box-shadow: 0 0 10px var(--sig-social);
+}
+
+/* ── Escenario ───────────────────────────────────────────────────────────── */
+
+.escenario {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-8);
+  padding: var(--s-12) var(--s-6);
+  text-align: center;
+}
+
+/* ── Orbe ────────────────────────────────────────────────────────────────── */
+
+.orbe-zona {
+  position: relative;
+  width: min(280px, 62vw);
+  height: min(280px, 62vw);
+  display: grid;
+  place-items: center;
+}
+
+.orbe {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.orbe__halo,
+.orbe__anillo,
+.orbe__nucleo {
+  position: absolute;
+  border-radius: 50%;
+  transition: transform 90ms cubic-bezier(0.2, 0, 0.1, 1),
+    opacity 200ms ease, background 300ms ease, border-color 300ms ease;
+}
+
+.orbe__halo {
+  inset: 0;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--activo) 28%, transparent) 0%,
+    transparent 68%
+  );
+  opacity: 0.35;
+}
+
+.orbe__anillo {
+  inset: 18%;
+  border: 1px solid color-mix(in srgb, var(--activo) 45%, transparent);
+}
+
+.orbe__nucleo {
+  inset: 34%;
+  background: color-mix(in srgb, var(--activo) 20%, var(--ink-700));
+  border: 1px solid color-mix(in srgb, var(--activo) 60%, transparent);
+}
+
+/* Respiración lenta mientras escucha: la app se ve viva sin gritar. */
+.orbe[data-estado="escuchando"] .orbe__anillo {
+  animation: respirar 3.4s ease-in-out infinite;
+}
+
+@keyframes respirar {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50%      { transform: scale(1.05); opacity: 1; }
+}
+
+/* Pulso: lo dispara JS con los tiempos exactos del patrón de vibración. */
+.orbe.pulsando .orbe__nucleo {
+  transform: scale(1.28);
+  background: var(--activo);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--activo) 60%, transparent);
+}
+.orbe.pulsando .orbe__anillo {
+  transform: scale(1.12);
+  border-color: var(--activo);
+}
+.orbe.pulsando .orbe__halo {
+  opacity: 0.9;
+  transform: scale(1.06);
+}
+
+.orbe__glifo {
+  position: relative;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--activo);
+  margin: 0;
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.orbe__glifo.visible {
+  opacity: 1;
+}
+
+/* Con reduced-motion el orbe no escala: cambia de opacidad. La información
+   sigue llegando, sin movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  .orbe[data-estado="escuchando"] .orbe__anillo {
+    animation: none;
+  }
+  .orbe.pulsando .orbe__nucleo,
+  .orbe.pulsando .orbe__anillo,
+  .orbe.pulsando .orbe__halo {
+    transform: none;
+  }
+}
+
+/* ── Evento actual ───────────────────────────────────────────────────────── */
+
+.evento {
+  max-width: 34ch;
+}
+
+.evento__categoria {
+  color: var(--activo);
+  margin: 0 0 var(--s-3);
+  transition: color 300ms ease;
+}
+
+.evento__etiqueta {
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  margin: 0;
+}
+
+.evento[data-vacio="true"] .evento__etiqueta {
+  color: var(--bone-25);
+}
+
+.evento__urgencia {
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone-45);
+  margin: var(--s-3) 0 0;
+  min-height: 1em;
+}
+
+/* El backend respondió con la forma del contrato pero sin clasificar de
+   verdad. No es un error de la app, pero tampoco es una detección. */
+.evento__urgencia[data-degradado="true"] {
+  color: var(--sig-alarma);
+}
+
+.evento__partitura {
+  margin-top: var(--s-6);
+  min-height: 30px;
+}
+
+/* Entrada de cada evento nuevo: nunca aparece seco. */
+.evento.entrando {
+  animation: entrar 260ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Control ─────────────────────────────────────────────────────────────── */
+
+.control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.boton-escuchar {
+  padding: var(--s-4) var(--s-12);
+  border: 1px solid var(--bone);
+  background: var(--bone);
+  color: var(--ink-900);
+  border-radius: 999px;
+  font-weight: 650;
+  font-size: var(--t-base);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.boton-escuchar:hover {
+  background: #fff;
+}
+
+.boton-escuchar[data-activo="true"] {
+  background: transparent;
+  color: var(--bone);
+  border-color: var(--line-fuerte);
+}
+.boton-escuchar[data-activo="true"]:hover {
+  border-color: var(--sig-alarma);
+  color: var(--sig-alarma);
+}
+
+.control__nota {
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  letter-spacing: 0.05em;
+  margin: 0;
+  min-height: 1.2em;
+  max-width: 40ch;
+}
+
+.control__nota[data-tipo="error"] {
+  color: var(--sig-alarma);
+}
+
+/* ── Leyenda del vocabulario ─────────────────────────────────────────────── */
+
+.leyenda {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: 0;
+  margin: var(--s-4) 0 0;
+  max-width: 640px;
+}
+
+.leyenda__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--t-xs);
+  color: var(--bone-45);
+  transition: color 240ms ease, border-color 240ms ease, background 240ms ease;
+}
+
+.leyenda__glifo {
+  color: var(--item-color);
+  opacity: 0.55;
+  transition: opacity 240ms ease;
+}
+
+/* El que se acaba de disparar. Así la leyenda no es decoración: dice dónde
+   estás parado dentro del vocabulario. */
+.leyenda__item[data-activo="true"] {
+  color: var(--bone);
+  border-color: color-mix(in srgb, var(--item-color) 55%, transparent);
+  background: color-mix(in srgb, var(--item-color) 10%, transparent);
+}
+.leyenda__item[data-activo="true"] .leyenda__glifo {
+  opacity: 1;
+}
+
+/* ── Historial ───────────────────────────────────────────────────────────── */
+
+.historial {
+  border-top: 1px solid var(--line);
+  padding: var(--s-6);
+  max-width: var(--ancho-max);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.historial__cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-4);
+}
+
+.historial__limpiar {
+  background: none;
+  border: 0;
+  color: var(--bone-25);
+  font-size: var(--t-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: var(--s-1) var(--s-2);
+  transition: color 140ms ease;
+}
+.historial__limpiar:hover {
+  color: var(--bone-70);
+}
+
+.historial__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.historial__vacio {
+  color: var(--bone-25);
+  font-size: var(--t-sm);
+  padding: var(--s-4) 0;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-2);
+  border-bottom: 1px solid var(--line);
+  animation: entrar 240ms cubic-bezier(0.2, 0, 0.1, 1);
+}
+
+.fila__glifo {
+  color: var(--fila-color);
+  font-size: var(--t-sm);
+  width: 1.2em;
+  text-align: center;
+}
+
+.fila__texto {
+  min-width: 0;
+}
+
+.fila__etiqueta {
+  display: block;
+  font-size: var(--t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fila__categoria {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone-25);
+}
+
+.fila__hora {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  font-variant-numeric: tabular-nums;
+}
+
+.fila[data-urgencia="alta"] .fila__etiqueta {
+  font-weight: 650;
+}

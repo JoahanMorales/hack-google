@@ -1,0 +1,483 @@
+@import url("partitura.css");
+
+/* ───────────────────────────────────────────────────────────────────────────
+   LANDING
+   Regla de especificidad que se sigue en todo el archivo: cada sección tiene
+   su prefijo de clase (.hero__, .cadena__, ...) y NUNCA se estilan elementos
+   por etiqueta dentro de una sección. Así ninguna regla cancela a otra.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.saltar {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--bone);
+  color: var(--ink-900);
+  padding: var(--s-3) var(--s-4);
+  z-index: 100;
+  text-decoration: none;
+}
+.saltar:focus {
+  left: var(--s-4);
+  top: var(--s-4);
+}
+
+/* ── Barra superior ──────────────────────────────────────────────────────── */
+
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--s-8);
+  padding: var(--s-4) var(--s-6);
+  background: color-mix(in srgb, var(--ink-800) 82%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.barra__marca {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  margin-right: auto;
+}
+
+.barra__nombre {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: var(--t-md);
+}
+
+.barra__version {
+  font-size: var(--t-xs);
+  color: var(--bone-45);
+}
+
+.barra__nav {
+  display: flex;
+  gap: var(--s-6);
+  font-size: var(--t-sm);
+}
+
+.barra__nav a {
+  color: var(--bone-70);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+.barra__nav a:hover {
+  color: var(--bone);
+}
+
+.boton-abrir {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--line-fuerte);
+  border-radius: var(--radio);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.boton-abrir:hover {
+  background: var(--ink-600);
+  border-color: var(--bone-45);
+}
+
+@media (max-width: 720px) {
+  .barra__nav {
+    display: none;
+  }
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  min-height: min(88vh, 780px);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+
+/* El ASCII es el fondo vivo del hero. El tamaño de fuente se calcula para que
+   las columnas de config.js quepan exactamente en el ancho de la ventana:
+   en monoespaciada cada carácter mide ~0.6em, así que 100vw / (cols * 0.6). */
+.hero__ascii {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: clamp(3px, calc(100vw / 92), 12px);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--sig-ambiental);
+  opacity: 0.5;
+  white-space: pre;
+  overflow: hidden;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Degradado que hunde el ASCII detrás del texto sin taparlo del todo. */
+.hero__velo {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, var(--ink-800) 4%, transparent 62%),
+    linear-gradient(to right, var(--ink-800) 12%, transparent 78%);
+  pointer-events: none;
+}
+
+.hero__texto {
+  position: relative;
+  padding: var(--s-16) var(--s-6) var(--s-12);
+  max-width: 720px;
+}
+
+.hero__eyebrow {
+  margin: 0 0 var(--s-6);
+}
+
+.hero__titulo {
+  font-size: var(--t-2xl);
+  margin-bottom: var(--s-4);
+}
+
+.hero__tagline {
+  font-size: clamp(1.125rem, 2.6vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--bone);
+  margin: 0 0 var(--s-4);
+  max-width: 20ch;
+  line-height: 1.2;
+}
+
+.hero__descripcion {
+  color: var(--bone-70);
+  max-width: 54ch;
+  margin: 0 0 var(--s-8);
+}
+
+.hero__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-bottom: var(--s-6);
+}
+
+.hero__nota {
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  margin: 0;
+  letter-spacing: 0.06em;
+}
+
+.boton-primario {
+  display: inline-block;
+  padding: var(--s-3) var(--s-6);
+  background: var(--bone);
+  color: var(--ink-900);
+  border: 1px solid var(--bone);
+  border-radius: var(--radio);
+  font-weight: 650;
+  font-size: var(--t-sm);
+  text-decoration: none;
+  transition: transform 120ms ease, background 140ms ease;
+}
+.boton-primario:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.boton-primario--grande {
+  padding: var(--s-4) var(--s-8);
+  font-size: var(--t-base);
+}
+
+.boton-fantasma {
+  display: inline-block;
+  padding: var(--s-3) var(--s-6);
+  border: 1px solid var(--line-fuerte);
+  border-radius: var(--radio);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--bone-70);
+  transition: color 140ms ease, border-color 140ms ease;
+}
+.boton-fantasma:hover {
+  color: var(--bone);
+  border-color: var(--bone-45);
+}
+
+/* ── Secciones ───────────────────────────────────────────────────────────── */
+
+.seccion__cabeza {
+  max-width: var(--ancho-max);
+  margin: 0 auto var(--s-12);
+  padding: 0 var(--s-6);
+}
+
+.seccion__titulo {
+  font-size: clamp(1.75rem, 4.2vw, 3.25rem);
+  max-width: 22ch;
+  margin: var(--s-4) 0 0;
+}
+
+.seccion__bajada {
+  color: var(--bone-70);
+  max-width: 60ch;
+  margin: var(--s-4) 0 0;
+}
+
+.vocabulario,
+.problema,
+.como {
+  padding: var(--s-24) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Vocabulario ─────────────────────────────────────────────────────────── */
+
+.vocabulario__lista {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0 var(--s-6);
+  max-width: var(--ancho-max);
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.tarjeta-patron {
+  background: var(--ink-800);
+  padding: var(--s-6);
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 2.2fr auto;
+  gap: var(--s-6);
+  align-items: center;
+  cursor: pointer;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  transition: background 140ms ease;
+}
+.tarjeta-patron:hover {
+  background: var(--ink-700);
+}
+
+.tarjeta-patron__id {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.tarjeta-patron__glifo {
+  font-size: var(--t-md);
+  line-height: 1;
+  color: var(--categoria-color);
+}
+
+.tarjeta-patron__nombre {
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  font-size: var(--t-md);
+  margin: 0;
+}
+
+.tarjeta-patron__ejemplos {
+  font-size: var(--t-sm);
+  color: var(--bone-45);
+  margin: var(--s-1) 0 0;
+}
+
+.tarjeta-patron__partitura {
+  min-width: 0;
+}
+
+.tarjeta-patron__accion {
+  font-size: var(--t-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bone-25);
+  white-space: nowrap;
+  font-family: var(--mono);
+}
+
+.tarjeta-patron:hover .tarjeta-patron__accion {
+  color: var(--categoria-color);
+}
+
+@media (max-width: 860px) {
+  .tarjeta-patron {
+    grid-template-columns: 1fr;
+    gap: var(--s-4);
+  }
+  .tarjeta-patron__accion {
+    display: none;
+  }
+}
+
+.vocabulario__pie {
+  max-width: var(--ancho-max);
+  margin: var(--s-6) auto 0;
+  padding: 0 var(--s-6);
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  letter-spacing: 0.05em;
+}
+
+/* ── Problema ────────────────────────────────────────────────────────────── */
+
+.problema__grid {
+  max-width: var(--ancho-max);
+  margin: 0 auto;
+  padding: 0 var(--s-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s-12);
+}
+
+.problema__sub {
+  font-size: var(--t-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bone-45);
+  font-family: var(--mono);
+  font-weight: 500;
+  margin: 0 0 var(--s-4);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.problema__col p {
+  color: var(--bone-70);
+  margin: 0 0 var(--s-4);
+  max-width: 46ch;
+}
+
+.problema__aclaracion {
+  max-width: var(--ancho-max);
+  margin: var(--s-12) auto 0;
+  padding: var(--s-6);
+  border-left: 2px solid var(--sig-atencion);
+  background: var(--ink-700);
+  color: var(--bone-70);
+  max-width: 68ch;
+}
+
+.problema__aclaracion strong {
+  color: var(--bone);
+}
+
+/* ── Cadena ──────────────────────────────────────────────────────────────── */
+
+.cadena {
+  list-style: none;
+  max-width: var(--ancho-max);
+  margin: 0 auto;
+  padding: 0 var(--s-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s-8);
+  counter-reset: paso;
+}
+
+.cadena__paso {
+  border-top: 1px solid var(--line-fuerte);
+  padding-top: var(--s-4);
+}
+
+.cadena__num {
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  letter-spacing: 0.12em;
+}
+
+.cadena__titulo {
+  font-size: var(--t-md);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: var(--s-2) 0 var(--s-3);
+}
+
+.cadena__paso p {
+  color: var(--bone-70);
+  font-size: var(--t-sm);
+  margin: 0 0 var(--s-3);
+}
+
+.cadena__dato {
+  font-size: var(--t-xl);
+  font-weight: 300;
+  color: var(--bone);
+  margin: var(--s-6) 0 0 !important;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.cadena__unidad {
+  font-size: var(--t-xs);
+  color: var(--bone-25);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: var(--s-2) 0 0 !important;
+}
+
+.cadena__paso code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  color: var(--bone);
+  background: var(--ink-600);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ── Cierre ──────────────────────────────────────────────────────────────── */
+
+.cierre {
+  padding: var(--s-24) var(--s-6);
+  text-align: center;
+}
+
+.cierre__titulo {
+  font-size: clamp(1.75rem, 4.5vw, 3.5rem);
+  max-width: 18ch;
+  margin: 0 auto var(--s-4);
+}
+
+.cierre__nota {
+  color: var(--bone-45);
+  font-size: var(--t-sm);
+  max-width: 46ch;
+  margin: 0 auto var(--s-8);
+}
+
+/* ── Pie ─────────────────────────────────────────────────────────────────── */
+
+.pie {
+  border-top: 1px solid var(--line);
+  padding: var(--s-8) var(--s-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-6);
+  max-width: var(--ancho-max);
+  margin: 0 auto;
+}
+
+.pie__col p {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-sm);
+  color: var(--bone-70);
+}

@@ -1,0 +1,21 @@
+# Secretos — nunca commitear
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.venv/
+venv/
+
+# Audio de prueba grabado local
+samples/
+
+# Salida de dev-check.sh
+.vibra-check/
+
+# OS
+.DS_Store
+Thumbs.db

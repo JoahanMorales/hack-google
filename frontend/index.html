@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{nombre}}</title>
+    <meta name="description" content="" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/landing.css" />
+  </head>
+  <body>
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+    <header class="barra">
+      <div class="barra__marca">
+        <span class="barra__nombre" data-cfg="nombre"></span>
+        <span class="barra__version mono" data-cfg="version"></span>
+      </div>
+      <nav class="barra__nav" aria-label="Secciones">
+        <a href="#vocabulario">Vocabulario</a>
+        <a href="#problema">Problema</a>
+        <a href="#como">Cómo funciona</a>
+      </nav>
+      <a class="boton-abrir" href="app.html">
+        Abrir la app
+        <span aria-hidden="true">→</span>
+      </a>
+    </header>
+
+    <main id="contenido">
+      <!-- ── HERO ──────────────────────────────────────────────────────────
+           El video en ASCII va aquí. Se genera en tiempo real desde
+           assets/media/hero.mp4 — ver ascii-video.js para las instrucciones.
+      -->
+      <section class="hero">
+        <pre class="hero__ascii" id="ascii" aria-hidden="true"></pre>
+        <div class="hero__velo" aria-hidden="true"></div>
+
+        <div class="hero__texto">
+          <p class="etiqueta hero__eyebrow">
+            <span data-cfg="equipo"></span>
+          </p>
+          <h1 class="display hero__titulo" data-cfg="nombre"></h1>
+          <p class="hero__tagline" data-cfg="tagline"></p>
+          <p class="hero__descripcion" data-cfg="descripcion"></p>
+
+          <div class="hero__acciones">
+            <a class="boton-primario" href="app.html">Abrir la app</a>
+            <a class="boton-fantasma" href="#vocabulario">Ver el vocabulario</a>
+          </div>
+
+          <p class="hero__nota mono" id="nota-ascii"></p>
+        </div>
+      </section>
+
+      <!-- ── VOCABULARIO: el elemento firma ────────────────────────────────
+           Cada categoría es un patrón real, dibujado a escala de ms y
+           reproducible. En un Android además vibra de verdad.
+      -->
+      <section class="vocabulario" id="vocabulario">
+        <div class="seccion__cabeza">
+          <p class="etiqueta">01 · El vocabulario</p>
+          <h2 class="display seccion__titulo">
+            Cuatro patrones que se distinguen sin ver la pantalla.
+          </h2>
+          <p class="seccion__bajada">
+            Una alerta que vibra igual para todo solo dice “pasó algo”. Estos
+            cuatro se diferencian por ritmo, no por duración, que es lo que
+            permite reconocerlos con el teléfono en el bolsillo. Toca
+            cualquiera para reproducirlo.
+          </p>
+        </div>
+
+        <ul class="vocabulario__lista" id="lista-vocabulario"></ul>
+
+        <p class="vocabulario__pie mono" id="aviso-vibracion"></p>
+      </section>
+
+      <!-- ── PROBLEMA ──────────────────────────────────────────────────── -->
+      <section class="problema" id="problema">
+        <div class="seccion__cabeza">
+          <p class="etiqueta">02 · El problema</p>
+          <h2 class="display seccion__titulo">
+            El portazo y la alarma de incendio se sienten idénticos.
+          </h2>
+        </div>
+
+        <div class="problema__grid">
+          <div class="problema__col">
+            <h3 class="problema__sub">Lo que hay hoy</h3>
+            <p>
+              Las luces estroboscópicas y los smartwatches genéricos avisan que
+              hubo un sonido, pero no cuál. La persona tiene que interrumpir lo
+              que está haciendo y buscar con la vista qué lo causó, cada vez.
+            </p>
+            <p>
+              En la práctica mucha gente termina apagando las notificaciones:
+              una alerta que no distingue entre urgente y trivial cansa más de
+              lo que sirve.
+            </p>
+          </div>
+          <div class="problema__col">
+            <h3 class="problema__sub">Lo que cambia aquí</h3>
+            <p>
+              Gemma 4 escucha el clip, decide qué fue y qué tan urgente es, y
+              el teléfono vibra con el patrón de esa categoría. No es una
+              alerta: es una palabra.
+            </p>
+            <p>
+              Y como el modelo corre en el dispositivo, el audio del cuarto de
+              alguien nunca sale a un servidor. Eso no es un detalle de
+              privacidad, es la condición para que alguien lo deje encendido
+              todo el día.
+            </p>
+          </div>
+        </div>
+
+        <p class="problema__aclaracion">
+          <strong>No es braille.</strong> El braille es lectura táctil para
+          personas ciegas. Esto es un código de vibración pensado para personas
+          sordas, y se aprende en un minuto porque solo son cuatro patrones.
+        </p>
+      </section>
+
+      <!-- ── CÓMO FUNCIONA ─────────────────────────────────────────────────
+           Es una cadena de señal real, así que va numerada: el orden importa
+           y cada paso tiene su latencia medida.
+      -->
+      <section class="como" id="como">
+        <div class="seccion__cabeza">
+          <p class="etiqueta">03 · La cadena</p>
+          <h2 class="display seccion__titulo">Del aire a la piel.</h2>
+        </div>
+
+        <ol class="cadena">
+          <li class="cadena__paso">
+            <span class="cadena__num mono">01</span>
+            <h3 class="cadena__titulo">Captura</h3>
+            <p>
+              El navegador graba clips cortos en loop con
+              <code>MediaRecorder</code>. Nada de streaming continuo: clips
+              discretos son más fáciles de clasificar y no saturan el modelo.
+            </p>
+            <p class="cadena__dato mono" data-cfg="audio.duracionClipMs"></p>
+            <p class="cadena__unidad mono">ms por clip</p>
+          </li>
+          <li class="cadena__paso">
+            <span class="cadena__num mono">02</span>
+            <h3 class="cadena__titulo">Interpretación</h3>
+            <p>
+              Gemma 4 recibe el audio y devuelve categoría, urgencia y una
+              etiqueta corta. Corre local, en una Jetson Orin Nano de 8 GB.
+            </p>
+            <p class="cadena__dato mono">~29</p>
+            <p class="cadena__unidad mono">tokens / segundo</p>
+          </li>
+          <li class="cadena__paso">
+            <span class="cadena__num mono">03</span>
+            <h3 class="cadena__titulo">Traducción</h3>
+            <p>
+              La categoría se convierte en un patrón de vibración y se dispara
+              con <code>navigator.vibrate()</code>. El orbe en pantalla pulsa
+              con los mismos tiempos exactos.
+            </p>
+            <p class="cadena__dato mono">4</p>
+            <p class="cadena__unidad mono">patrones distinguibles</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="cierre">
+        <h2 class="display cierre__titulo">
+          Pruébalo con el micrófono de tu teléfono.
+        </h2>
+        <p class="cierre__nota">
+          Funciona mejor en Android: iOS no expone la API de vibración. En
+          escritorio se ve el patrón aunque no se sienta.
+        </p>
+        <a class="boton-primario boton-primario--grande" href="app.html">
+          Abrir la app
+        </a>
+      </section>
+    </main>
+
+    <footer class="pie">
+      <div class="pie__col">
+        <p class="etiqueta">Proyecto</p>
+        <p><span data-cfg="nombre"></span> <span class="mono" data-cfg="version"></span></p>
+      </div>
+      <div class="pie__col">
+        <p class="etiqueta">Modelo</p>
+        <p class="mono" data-cfg="modelo"></p>
+      </div>
+      <div class="pie__col">
+        <p class="etiqueta">Contexto</p>
+        <p data-cfg="equipo"></p>
+      </div>
+    </footer>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/patterns.js"></script>
+    <script src="assets/js/haptic-score.js"></script>
+    <script src="assets/js/ascii-video.js"></script>
+    <script src="assets/js/landing.js"></script>
+  </body>
+</html>
