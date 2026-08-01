@@ -97,12 +97,14 @@ function aplicarConfig(raiz = document) {
     if (valor != null) el.textContent = valor;
   });
 
-  // El nombre también vive fuera del <body>.
+  // El <title> y el meta llevan el texto correcto ya escrito en el HTML, para
+  // que quien comparta el link no vea un placeholder en la vista previa. Aquí
+  // se sobreescriben con la config, que sigue siendo la fuente de verdad.
+  const sufijo = document.body.dataset.tituloSufijo;
+  document.title = sufijo ? `${CONFIG.nombre} · ${sufijo}` : CONFIG.nombre;
+
   const meta = document.querySelector('meta[name="description"]');
   if (meta) meta.content = CONFIG.descripcionCorta;
-  if (document.title.includes('{{nombre}}')) {
-    document.title = document.title.replace('{{nombre}}', CONFIG.nombre);
-  }
 
   // La versión se esconde sola si está vacía.
   if (!CONFIG.version) {
