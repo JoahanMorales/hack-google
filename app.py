@@ -21,8 +21,20 @@ from validacion import AudioInvalido, respuesta_contrato, validar_audio_base64  
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vibra.app")
 
-app = Flask(__name__)
+# El backend sirve tambien el frontend del Agente 1. Asi todo queda en un solo
+# origen: no hay CORS que resolver, el frontend usa la ruta relativa
+# /clasificar, y basta apuntar el tunel a este puerto para que la demo entera
+# quede publica con una sola URL.
+_DIR_FRONTEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+
+app = Flask(__name__, static_folder=_DIR_FRONTEND, static_url_path="")
 CORS(app)
+
+
+@app.route("/", methods=["GET"])
+def portada():
+    return app.send_static_file("index.html")
+
 
 MAX_CONTENT_LENGTH = 8 * 1024 * 1024 + 16 * 1024  # audio + margen para el JSON envolvente
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH

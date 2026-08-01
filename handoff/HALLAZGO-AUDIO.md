@@ -35,6 +35,16 @@ Nota: con un WAV corrupto Ollama **sí** devuelve 400 *"Failed to load image or
 audio file"*. O sea que intenta decodificar el audio — el problema es que
 después no hay encoder que lo convierta en tokens.
 
+## Estado: ya implementado en main
+
+`gemma_client._mensaje_multimodal()` genera el espectrograma con
+`espectrograma.py` y lo manda como `image_url`. El prompt está en `prompt.py`.
+`GET /salud` ahora reporta `modo_entrada: "espectrograma_png"` en vez de mentir
+con `audio_soportado: true`.
+
+Lo de abajo es el registro de cómo se llegó ahí: sirve para el writeup y para
+que nadie repita los callejones sin salida.
+
 ## La solución, ya probada
 
 Convertir el clip a **espectrograma PNG** y mandarlo como `image_url`. La
@@ -56,8 +66,39 @@ Se arregla con una **tabla de decisión explícita** en el prompt:
 | Pitido 3 kHz intermitente | `alarma` ✅ |
 | Ruido de banda ancha | `ambiental` ✅ |
 
-El prompt que funciona y el generador de espectrogramas están en
-[`espectrograma.py`](espectrograma.py), listo para correr.
+### Lo que se midió
+
+Cuatro audios sintéticos (pitido 3 kHz intermitente, ruido de banda ancha, voz
+con armónicos, tres golpes aislados), por el pipeline completo:
+
+| Configuración del prompt | Aciertos |
+|---|---|
+| Tabla simple, "alarma" primero, `temperature=0.1` | **3/4** ← la que quedó |
+| Tabla simple, "alarma" primero, temperatura default | 3/4 |
+| Tabla detallada con reglas de desempate | 1/4 |
+| Igual, pero moviendo "social" al inicio de la lista | 2/4 |
+| Pedir observaciones visuales y mapear la categoría en Python | 1/4 |
+
+Dos aprendizajes que valen más que el prompt en sí:
+
+1. **e2b tiene un sesgo fuerte hacia la primera opción de la lista.** Cambiar el
+   orden mueve más el resultado que cambiar las descripciones. Por eso "alarma"
+   va primero: un falso negativo de emergencia cuesta mucho más que un falso
+   positivo.
+2. **Alargar el prompt lo empeora.** Cada regla extra le quitó precisión. Con un
+   modelo de este tamaño, agregar texto casi nunca es la respuesta.
+
+También se fijó `temperature=0.1`. Sin eso corría con el default de Ollama
+(0.8) y el mismo espectrograma caía en categorías distintas entre corridas.
+
+### Lo que falta medir
+
+**Los cuatro audios de prueba son sintéticos** y eso limita lo que se puede
+concluir. El de "voz" es un zumbido armónico muy regular que en espectrograma
+se parece de verdad a una alarma. Antes de dar la calidad por buena hay que
+volver a medir con grabaciones reales: alarma de humo de verdad, gente hablando
+de verdad, el timbre de una puerta de verdad. El arnés está en
+`handoff/espectrograma.py`, solo hay que cambiarle las fuentes.
 
 ## Qué hay que cambiar
 
