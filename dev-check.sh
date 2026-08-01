@@ -6,7 +6,7 @@
 # Uso: ./dev-check.sh
 set -uo pipefail
 
-PUERTO=8842
+PUERTO=5000
 RAIZ="$(cd "$(dirname "$0")" && pwd)/frontend"
 # Chromium viene como snap y está confinado: no puede escribir en /tmp, solo
 # dentro de $HOME. Por eso la salida no va al directorio temporal de siempre.

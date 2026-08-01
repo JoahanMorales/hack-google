@@ -367,6 +367,34 @@
   max-width: 46ch;
 }
 
+.casos {
+  list-style: none;
+  max-width: var(--ancho-max);
+  margin: var(--s-12) auto 0;
+  padding: 0 var(--s-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-8);
+}
+
+.caso {
+  border-top: 1px solid var(--line-fuerte);
+  padding-top: var(--s-4);
+}
+
+.caso__titulo {
+  font-size: var(--t-base);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--s-3);
+}
+
+.caso p {
+  color: var(--bone-70);
+  font-size: var(--t-sm);
+  margin: 0;
+}
+
 .problema__aclaracion {
   max-width: var(--ancho-max);
   margin: var(--s-12) auto 0;

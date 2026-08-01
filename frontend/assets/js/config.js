@@ -14,22 +14,23 @@
 const CONFIG = {
   // ── Identidad ───────────────────────────────────────────────────────────
   // Cambia esto y ya. Lo demás se acomoda solo.
-  nombre: 'VibraContexto',
+  nombre: 'Coralia',
 
   // Se muestra chiquito junto al nombre. Déjalo vacío ('') para ocultarlo.
-  version: 'v0.1',
+  version: '',
 
   // Una línea. Es lo primero que lee un juez, que sea concreta.
-  tagline: 'El sonido del cuarto, traducido a piel.',
+  tagline: 'Siente tu espacio.',
 
   // Párrafo del hero. Dos o tres frases máximo.
   descripcion:
-    'Las alertas para personas sordas vibran igual para un portazo que para una alarma de incendio. ' +
-    'Aquí cada tipo de sonido tiene su propio patrón de vibración, así que se distingue qué pasó sin ver la pantalla.',
+    'Coralia traduce el sonido del entorno en vibraciones distintivas, para que ' +
+    'las personas sordas sepan qué está pasando a su alrededor en tiempo real. ' +
+    'Gemma 4 escucha e interpreta el audio.',
 
   // Aparece en el <meta description> y cuando se comparte el link.
   descripcionCorta:
-    'Traduce el sonido del entorno en patrones de vibración distinguibles, con Gemma 4 corriendo local.',
+    'Traduce el sonido del entorno en vibraciones distintivas para personas sordas, con Gemma 4 interpretando el audio.',
 
   // ── Créditos ────────────────────────────────────────────────────────────
   equipo: 'Hackday Gemma 4 · GDG CDMX',
@@ -41,6 +42,18 @@ const CONFIG = {
     duracionClipMs: 3500,
     // Pausa entre clips, para no saturar la Jetson (es un solo dispositivo).
     pausaEntreClipsMs: 600,
+  },
+
+  // ── Detección de nombre ─────────────────────────────────────────────────
+  // Corre en el navegador con la Web Speech API, en paralelo a Gemma. No es
+  // otro modelo que descargar: Chrome ya lo trae. Se usa SOLO para esto —
+  // reconocer una palabra — porque para eso no hace falta un LLM y así el
+  // aviso es instantáneo en vez de esperar el ciclo de 3.5s del clip.
+  nombreUsuario: {
+    // Se puede dejar vacío: la app pide el nombre en pantalla y lo guarda en
+    // el navegador. Esto es solo el valor por defecto.
+    valor: '',
+    activo: true,
   },
 
   // ── Backend ─────────────────────────────────────────────────────────────

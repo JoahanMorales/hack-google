@@ -62,6 +62,25 @@
         <p class="control__nota mono" id="control-nota"></p>
       </div>
 
+      <!-- Tu nombre. Se reconoce en el navegador con la Web Speech API, en
+           paralelo a Gemma, para que el aviso llegue al instante en vez de
+           esperar el ciclo del clip. -->
+      <div class="nombre-propio" id="nombre-propio">
+        <label class="nombre-propio__label etiqueta" for="input-nombre">
+          Avísame si dicen mi nombre
+        </label>
+        <input
+          class="nombre-propio__input"
+          id="input-nombre"
+          type="text"
+          placeholder="escribe tu nombre"
+          autocomplete="given-name"
+          spellcheck="false"
+          maxlength="24"
+        />
+        <p class="nombre-propio__estado mono" id="nombre-estado"></p>
+      </div>
+
       <!-- Leyenda: enseña el vocabulario háptico antes de usarlo. Un código
            nuevo no sirve de nada si la persona no sabe qué significa cada
            patrón, así que está a la vista desde el primer segundo y se
@@ -92,6 +111,7 @@
     <script src="assets/js/patterns.js"></script>
     <script src="assets/js/haptic-score.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/deteccion-nombre.js"></script>
     <script src="assets/js/app.js"></script>
   </body>
 </html>

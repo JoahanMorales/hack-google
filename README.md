@@ -1,8 +1,40 @@
-# VibraContexto 📳
+# Coralia 📳
 
-App web que traduce el sonido del entorno en vibraciones distintivas y personalizables, para que personas sordas se enteren de lo que pasa a su alrededor en tiempo real. Corre 100% en el navegador (Web Vibration API) y usa **Gemma 4** local para interpretar el audio.
+**Siente tu espacio.**
 
-> Cambia el nombre si ya tienen uno para el equipo — este es solo un placeholder para el repo.
+Coralia es una aplicación web que traduce el sonido del entorno en vibraciones
+distintivas, para que personas sordas sepan qué está pasando a su alrededor en
+tiempo real. Usa **Gemma 4** para escuchar e interpretar el audio.
+
+También cubre otros casos: avisarle a un padre o madre cuando el bebé llora, o
+detectar cuando alguien te llama por tu nombre entre el ruido.
+
+Corre en el navegador (Web Vibration API) contra Gemma 4 en una Jetson local.
+
+## Cómo correrlo
+
+```bash
+cp .env.example .env     # y pon GEMMA_BASE_URL=http://127.0.0.1:11434/v1
+./arrancar-demo.sh
+```
+
+Levanta el backend, sirve el frontend en el mismo origen y publica el túnel.
+Abrir en **Android** — iOS no expone la API de vibración.
+
+Plan B si falla el micrófono en el escenario: `/app.html?demo=1`
+
+## Cómo se clasifica el sonido
+
+Gemma 4 **no tiene encoder de audio**: Ollama acepta el audio, responde 200 OK
+y el modelo nunca lo recibe, así que inventa la respuesta. El clip se convierte
+a **espectrograma PNG** y se manda como imagen, que sí procesa.
+
+Ver [`handoff/HALLAZGO-AUDIO.md`](handoff/HALLAZGO-AUDIO.md) para la evidencia
+y las variantes de prompt que se midieron.
+
+La detección del nombre propio va aparte, con la Web Speech API en el
+navegador: reconocer una palabra no necesita un LLM y así el aviso es
+instantáneo en vez de esperar el ciclo de 3.5 s del clip.
 
 ---
 

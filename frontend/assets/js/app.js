@@ -13,6 +13,7 @@ const estado = {
 
 let cliente;
 let partituraEvento;
+let detectorNombre = null;
 let temporizadoresOrbe = [];
 
 // ── Elementos ────────────────────────────────────────────────────────────────
@@ -24,11 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
     'evento-urgencia', 'evento-partitura', 'boton-escuchar',
     'boton-escuchar-texto', 'control-nota', 'historial-lista', 'limpiar',
     'estado-fuente', 'estado-texto', 'anuncio', 'leyenda',
+    'nombre-propio', 'input-nombre', 'nombre-estado',
   ].forEach((id) => {
     el[id] = document.getElementById(id);
   });
 
   construirLeyenda();
+  prepararDeteccionNombre();
 
   partituraEvento = new PartituraHaptica(el['evento-partitura'], {
     conEtiquetas: false,
@@ -75,6 +78,70 @@ function construirLeyenda() {
   });
 }
 
+// ── Detección del nombre propio ──────────────────────────────────────────────
+
+const LLAVE_NOMBRE = 'coralia.nombre';
+
+function prepararDeteccionNombre() {
+  if (!CONFIG.nombreUsuario.activo) {
+    el['nombre-propio'].hidden = true;
+    return;
+  }
+
+  if (!DetectorDeNombre.soportado()) {
+    // Ni ocultarlo ni fingir que funciona: se explica por qué no está.
+    el['input-nombre'].disabled = true;
+    el['input-nombre'].placeholder = 'no disponible aquí';
+    el['nombre-estado'].textContent =
+      'Este navegador no reconoce voz. Funciona en Chrome, de escritorio o Android.';
+    return;
+  }
+
+  detectorNombre = new DetectorDeNombre((frase) => alEscucharNombre(frase));
+
+  // El nombre se guarda en el navegador para no volver a escribirlo en cada
+  // recarga, que en una demo con jueces pasa varias veces.
+  const guardado = localStorage.getItem(LLAVE_NOMBRE) || CONFIG.nombreUsuario.valor;
+  if (guardado) {
+    el['input-nombre'].value = guardado;
+    detectorNombre.definirNombre(guardado);
+  }
+  pintarEstadoNombre();
+
+  el['input-nombre'].addEventListener('input', () => {
+    const valor = el['input-nombre'].value.trim();
+    localStorage.setItem(LLAVE_NOMBRE, valor);
+    detectorNombre.definirNombre(valor);
+    pintarEstadoNombre();
+  });
+}
+
+function pintarEstadoNombre() {
+  const nombre = el['input-nombre'].value.trim();
+  if (!nombre) {
+    el['nombre-estado'].textContent = '';
+    return;
+  }
+  el['nombre-estado'].textContent = estado.escuchando
+    ? `Escuchando por "${nombre}"`
+    : `Listo. Se activa al empezar a escuchar.`;
+}
+
+/**
+ * Alguien dijo el nombre. Se dispara de inmediato, sin pasar por Gemma: la
+ * palabra ya se reconoció y esperar el ciclo del clip haría llegar el aviso
+ * cuando la persona ya volteó a otro lado.
+ */
+function alEscucharNombre(frase) {
+  mostrarEvento({
+    categoria: 'atencion',
+    urgencia: 'alta',
+    etiqueta: `Te llamaron: "${el['input-nombre'].value.trim()}"`,
+    reasoning: `Reconocido en el navegador dentro de la frase: "${frase}"`,
+    degradado: false,
+  });
+}
+
 function resaltarLeyenda(categoriaId) {
   el.leyenda.querySelectorAll('.leyenda__item').forEach((item) => {
     item.dataset.activo = String(item.dataset.categoria === categoriaId);
@@ -111,6 +178,13 @@ async function iniciarEscucha() {
     );
   }
 
+  // Corre en paralelo al ciclo de clips. Si falla, no arrastra al resto: la
+  // clasificación con Gemma es lo principal y tiene que seguir viva.
+  if (detectorNombre && el['input-nombre'].value.trim() && micOk) {
+    detectorNombre.iniciar();
+  }
+  pintarEstadoNombre();
+
   bucleDeEscucha();
 }
 
@@ -126,10 +200,13 @@ function detenerEscucha() {
     estado.pista = null;
   }
 
+  if (detectorNombre) detectorNombre.detener();
+
   el['boton-escuchar'].dataset.activo = 'false';
   el['boton-escuchar-texto'].textContent = 'Empezar a escuchar';
   el.orbe.dataset.estado = 'dormido';
   vibrar(0); // cortar cualquier vibración en curso
+  pintarEstadoNombre();
 }
 
 async function pedirMicrofono() {
